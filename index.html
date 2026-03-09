@@ -5,6 +5,76 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>La Guarida — Gestión de Ferias</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC3U5QOwzRCCAgmFk6uvqIaGTCOafiz4iA",
+    authDomain: "laguarida-ferias.firebaseapp.com",
+    projectId: "laguarida-ferias",
+    storageBucket: "laguarida-ferias.firebasestorage.app",
+    messagingSenderId: "737768853946",
+    appId: "1:737768853946:web:015407cd353586cff54d83"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getFirestore(fbApp);
+  const DOC_REF = doc(db, "ferias", "state");
+
+  // Exponer funciones al scope global para que el resto de la app las use
+  window._fbSave = async function(stateObj) {
+    try {
+      await setDoc(DOC_REF, { data: JSON.stringify(stateObj), updatedAt: Date.now() });
+      setCloudStatus('ok');
+    } catch(e) {
+      console.error("Firebase save error:", e);
+      setCloudStatus('error');
+    }
+  };
+
+  window._fbLoad = async function() {
+    try {
+      const snap = await getDoc(DOC_REF);
+      if (snap.exists()) {
+        setCloudStatus('ok');
+        return JSON.parse(snap.data().data);
+      }
+      return null;
+    } catch(e) {
+      console.error("Firebase load error:", e);
+      setCloudStatus('error');
+      return null;
+    }
+  };
+
+  // Escuchar cambios en tiempo real (para uso multi-dispositivo)
+  onSnapshot(DOC_REF, (snap) => {
+    if (snap.exists() && window._fbOnRemoteChange) {
+      window._fbOnRemoteChange(JSON.parse(snap.data().data));
+    }
+    setCloudStatus('ok');
+  }, (err) => {
+    setCloudStatus('error');
+  });
+
+  function setCloudStatus(status) {
+    const el = document.getElementById('cloud-status');
+    if (!el) return;
+    if (status === 'ok') {
+      el.textContent = '☁️ Sincronizado';
+      el.style.color = 'rgba(255,255,255,0.9)';
+    } else {
+      el.textContent = '⚠️ Sin conexión';
+      el.style.color = '#ffd166';
+    }
+  }
+
+  // Señalizar que Firebase está listo
+  window._fbReady = true;
+  document.dispatchEvent(new Event('firebase-ready'));
+</script>
 <style>
   :root {
     --bg: #f5f5f0;
@@ -293,6 +363,14 @@
       <button class="nav-btn" onclick="showPage('cierre')" id="nav-cierre">✅ Cierre</button>
       <button class="nav-btn" onclick="showPage('comparativa')" id="nav-comparativa">📊 Comparativa</button>
       <button class="nav-btn" onclick="showPage('checklist')" id="nav-checklist">🗂️ Checklist</button>
+      <div style="width:1px;background:rgba(255,255,255,0.2);margin:0 6px"></div>
+      <span id="cloud-status" style="font-size:11px;font-family:'DM Sans',sans-serif;color:rgba(255,255,255,0.6);padding:0 4px;white-space:nowrap">☁️ Conectando...</span>
+      <div style="width:1px;background:rgba(255,255,255,0.2);margin:0 6px"></div>
+      <button class="nav-btn" onclick="exportarDatos()" title="Exportar todos los datos a un archivo JSON">⬇️ Exportar</button>
+      <label class="nav-btn" style="cursor:pointer" title="Importar datos desde un archivo JSON">
+        ⬆️ Importar
+        <input type="file" accept=".json" onchange="importarDatos(event)" style="display:none">
+      </label>
     </nav>
   </header>
 
@@ -734,22 +812,63 @@ let state = {
   recetas: {},       // { [nombreProducto]: { costoBase, costoProduccion, insumos: [id,...] } }
 };
 
+let _isSyncingFromRemote = false;
+
 function loadState() {
+  // Carga local primero para mostrar algo inmediatamente
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const saved = JSON.parse(raw);
       state = { ...state, ...saved };
     }
-    // Si no hay insumos todavía, cargar los default
     if (!state.insumos || state.insumos.length === 0) {
       state.insumos = [...INSUMOS_DEFAULT];
     }
   } catch(e) {}
+
+  // Luego carga desde Firebase (cuando esté listo)
+  const doFirebaseLoad = async () => {
+    if (!window._fbLoad) return;
+    const cloudData = await window._fbLoad();
+    if (cloudData) {
+      _isSyncingFromRemote = true;
+      state = { ...state, ...cloudData };
+      if (!state.insumos || state.insumos.length === 0) state.insumos = [...INSUMOS_DEFAULT];
+      // Guardar localmente también
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderEventos();
+      renderChecklist();
+      _isSyncingFromRemote = false;
+    }
+  };
+
+  if (window._fbReady) {
+    doFirebaseLoad();
+  } else {
+    document.addEventListener('firebase-ready', doFirebaseLoad, { once: true });
+  }
+
+  // Escuchar cambios remotos (multi-dispositivo)
+  window._fbOnRemoteChange = function(cloudData) {
+    if (_isSyncingFromRemote) return;
+    _isSyncingFromRemote = true;
+    state = { ...state, ...cloudData };
+    if (!state.insumos || state.insumos.length === 0) state.insumos = [...INSUMOS_DEFAULT];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    renderEventos();
+    renderChecklist();
+    _isSyncingFromRemote = false;
+  };
 }
 
 function saveState() {
+  // Guardar local siempre
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  // Guardar en Firebase si está disponible
+  if (window._fbSave && !_isSyncingFromRemote) {
+    window._fbSave(state);
+  }
 }
 
 function getActiveEvent() {
@@ -1699,6 +1818,48 @@ function eliminarInsumo(id) {
   saveState();
   renderInsumosLista();
   if (recetaActivaNombre) seleccionarReceta(recetaActivaNombre);
+}
+
+// ============================================================
+// EXPORTAR / IMPORTAR
+// ============================================================
+
+function exportarDatos() {
+  const datos = JSON.stringify(state, null, 2);
+  const blob = new Blob([datos], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const fecha = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `laguarida-ferias-backup-${fecha}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importarDatos(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const datos = JSON.parse(e.target.result);
+      if (!datos.eventos && !datos.recetas && !datos.checklist) {
+        alert('❌ El archivo no parece ser un backup válido de La Guarida Ferias.');
+        return;
+      }
+      if (!confirm(`¿Importar datos del archivo "${file.name}"?\n\nEsto va a REEMPLAZAR todos los datos actuales.`)) return;
+      state = { ...state, ...datos };
+      saveState();
+      renderEventos();
+      renderChecklist();
+      alert('✅ Datos importados correctamente.');
+    } catch(err) {
+      alert('❌ Error al leer el archivo. Asegurate de que sea un JSON válido.');
+    }
+  };
+  reader.readAsText(file);
+  // Limpiar el input para que se pueda reimportar el mismo archivo
+  event.target.value = '';
 }
 
 // ============================================================
