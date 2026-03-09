@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Guarida — Gestión de Ferias</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f5f0;
+    --surface: #ffffff;
+    --surface2: #fafaf7;
+    --surface3: #eeede8;
+    --border: #e0ddd6;
+    --accent: #e8560a;
+    --accent-light: #ff7a33;
+    --accent2: #c04508;
+    --accent3: #2d6a35;
+    --accent3-light: #3d8f47;
+    --danger: #c0392b;
+    --warn: #d97706;
+    --text: #1a1a1a;
+    --text2: #555550;
+    --text3: #999990;
+    --radius: 10px;
+    --radius-sm: 7px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+  h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+  /* LAYOUT */
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+  .header {
+    background: var(--accent);
+    border-bottom: 4px solid var(--accent3);
+    padding: 14px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(232,86,10,0.25);
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { font-size: 26px; }
+  .logo h1 { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.5px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+  .logo span { font-size: 11px; color: rgba(255,255,255,0.75); font-weight: 400; font-family: 'DM Sans'; }
+  .nav { display: flex; gap: 4px; }
+  .nav-btn {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.9); cursor: pointer;
+    padding: 7px 13px; border-radius: var(--radius-sm); font-family: 'Syne', sans-serif;
+    font-size: 12px; font-weight: 600; transition: all 0.2s; letter-spacing: 0.3px;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.28); color: #fff; }
+  .nav-btn.active { background: #fff; color: var(--accent); border-color: #fff; }
+
+  .main { flex: 1; padding: 28px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .card-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .card-subtitle { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* INPUTS */
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 11px; color: var(--text3); margin-bottom: 6px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 14px; border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; transition: border 0.2s;
+    outline: none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .form-group select option { background: var(--surface2); }
+
+  /* BUTTONS */
+  .btn {
+    border: none; cursor: pointer; padding: 10px 20px; border-radius: var(--radius-sm);
+    font-family: 'Syne', sans-serif; font-weight: 600; font-size: 12px;
+    letter-spacing: 0.3px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--surface3); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { opacity: 0.85; }
+  .btn-success { background: var(--accent3); color: #fff; }
+  .btn-success:hover { background: var(--accent3-light); }
+  .btn-sm { padding: 6px 12px; font-size: 11px; }
+  .btn-icon { padding: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; transition: all 0.2s; }
+  .btn-icon:hover { background: var(--surface3); color: var(--text); }
+
+  /* BADGES */
+  .badge {
+    display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; font-family: 'Syne', sans-serif;
+  }
+  .badge-ok { background: #d4edda; color: #1a5c28; }
+  .badge-warn { background: #fff3cd; color: #7a4f00; }
+  .badge-danger { background: #fde8e6; color: #a0261b; }
+  .badge-neutral { background: var(--surface3); color: var(--text2); border: 1px solid var(--border); }
+  .badge-accent { background: #fde8d6; color: var(--accent2); }
+
+  /* STAT BOXES */
+  .stat-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; color: var(--accent); }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 10px 12px; font-family: 'Syne', sans-serif;
+    font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px;
+    border-bottom: 2px solid var(--border); white-space: nowrap; background: var(--surface2);
+  }
+  td { padding: 12px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  td input[type="number"] {
+    width: 90px; background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 10px; border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+  }
+  td input[type="number"]:focus { border-color: var(--accent); }
+
+  /* PROGRESS */
+  .progress-bar { background: var(--surface3); border-radius: 20px; height: 8px; overflow: hidden; border: 1px solid var(--border); }
+  .progress-fill { height: 100%; border-radius: 20px; transition: width 0.5s ease; }
+  .progress-fill.ok { background: var(--accent3); }
+  .progress-fill.warn { background: #e8c445; }
+  .progress-fill.danger { background: var(--danger); }
+  .progress-fill.accent { background: var(--accent); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+  .tab-btn {
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    padding: 10px 16px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* CHECKLIST */
+  .checklist-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .checklist-item.checked { opacity: 0.5; background: var(--surface2); }
+  .checklist-item input[type="checkbox"] { 
+    width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0;
+  }
+  .checklist-item span { flex: 1; font-size: 14px; }
+  .checklist-item.checked span { text-decoration: line-through; color: var(--text3); }
+  .checklist-item .delete-item { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 2px 6px; }
+  .checklist-item .delete-item:hover { color: var(--danger); }
+
+  /* ALERTS */
+  .alert {
+    padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 12px;
+    font-size: 13px; display: flex; align-items: flex-start; gap: 10px;
+  }
+  .alert-warn { background: #fef9e7; border: 1px solid #f5d67a; color: #7d5e00; }
+  .alert-danger { background: #fdf0ef; border: 1px solid #f5b7b1; color: #a0261b; }
+  .alert-ok { background: #eafaf2; border: 1px solid #a9dfbf; color: #1e6e41; }
+  .alert-info { background: #fef5e7; border: 1px solid #f0c080; color: var(--accent2); }
+
+  /* SIMULATOR */
+  .sim-slider { width: 100%; accent-color: var(--accent); cursor: pointer; height: 6px; }
+  .sim-result { 
+    padding: 20px; border-radius: var(--radius); margin-top: 16px;
+    border: 2px solid var(--border); text-align: center;
+    transition: all 0.3s; background: var(--surface2);
+  }
+  .sim-result.alcanza { border-color: var(--accent3); background: #eafaf2; }
+  .sim-result.no-alcanza { border-color: var(--danger); background: #fdf0ef; }
+
+  /* EVENT LIST */
+  .event-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; cursor: pointer;
+    transition: all 0.2s; position: relative;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .event-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(232,86,10,0.12); }
+  .event-card.active-event { border-color: var(--accent); background: #fff5f0; }
+  .event-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .event-card .event-meta { font-size: 12px; color: var(--text3); }
+
+  /* CARDS */
+  .card { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* TOOLTIP like label */
+  .hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .section-sub { font-size: 13px; color: var(--text3); margin-bottom: 24px; }
+
+  /* Number formatting */
+  .money { font-family: 'Syne', sans-serif; font-weight: 600; }
+  .money-big { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--accent); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .nav-btn span { display: none; }
+    .main { padding: 16px; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 24px; color: var(--text3); }
+  .empty .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty p { font-size: 14px; }
+
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-16 { margin-bottom: 16px; }
+  .text-sm { font-size: 12px; }
+  .text-xs { font-size: 11px; }
+  .text-muted { color: var(--text3); }
+  .text-accent { color: var(--accent); }
+  .text-ok { color: var(--accent3); }
+  .text-danger { color: var(--danger); }
+  .font-bold { font-weight: 700; font-family: 'Syne', sans-serif; }
+  .w-full { width: 100%; }
+  .inline-add { display: flex; gap: 8px; }
+  .inline-add input { flex: 1; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      <span class="logo-icon">🛡️</span>
+      <div>
+        <h1>La Guarida — Ferias</h1>
+        <span>Sistema de gestión de eventos</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" onclick="showPage('eventos')" id="nav-eventos">📅 Eventos</button>
+      <button class="nav-btn" onclick="showPage('recetario')" id="nav-recetario">🧪 Recetario</button>
+      <button class="nav-btn" onclick="showPage('planificacion')" id="nav-planificacion">📦 Planificación</button>
+      <button class="nav-btn" onclick="showPage('cierre')" id="nav-cierre">✅ Cierre</button>
+      <button class="nav-btn" onclick="showPage('comparativa')" id="nav-comparativa">📊 Comparativa</button>
+      <button class="nav-btn" onclick="showPage('checklist')" id="nav-checklist">🗂️ Checklist</button>
+    </nav>
+  </header>
+
+  <main class="main">
+
+    <!-- ===== PAGE: EVENTOS ===== -->
+    <div id="page-eventos" class="tab-panel active">
+      <div class="flex items-center justify-between mb-16">
+        <div>
+          <h2 class="section-title">Mis Eventos</h2>
+          <p class="section-sub">Creá y gestioná cada feria o evento</p>
+        </div>
+        <button class="btn btn-primary" onclick="openNewEventModal()">+ Nuevo Evento</button>
+      </div>
+
+      <div id="eventos-list" class="grid-3"></div>
+    </div>
+
+    <!-- ===== PAGE: RECETARIO ===== -->
+    <div id="page-recetario" class="tab-panel">
+      <div class="flex items-center justify-between mb-16">
+        <div>
+          <h2 class="section-title">Recetario de Productos</h2>
+          <p class="section-sub">Definí el costo real de cada producto: base + insumos (cajita, bolsa, sublimación, etc.)</p>
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:24px; align-items:start">
+
+        <!-- Lista de productos -->
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header" style="margin-bottom:12px">
+              <div class="card-title">Insumos globales</div>
+              <button class="btn btn-sm btn-secondary" onclick="abrirModalInsumo(null)">+ Nuevo insumo</button>
+            </div>
+            <p class="hint mb-16">Son los materiales que reutilizás entre productos: cajita, bolsa, sticker, papel tissue, etc.</p>
+            <div id="insumos-lista"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header" style="margin-bottom:12px">
+              <div class="card-title">Productos</div>
+            </div>
+            <input type="text" id="receta-buscar" placeholder="🔍 Buscar producto..." oninput="renderRecetaLista()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;margin-bottom:12px">
+            <div id="receta-prod-lista" style="max-height:480px;overflow-y:auto"></div>
+          </div>
+        </div>
+
+        <!-- Editor de receta -->
+        <div class="card" style="position:sticky;top:80px">
+          <div id="receta-editor-empty" class="empty" style="padding:40px 0">
+            <div class="icon">🧪</div>
+            <p>Seleccioná un producto para editar su receta</p>
+          </div>
+          <div id="receta-editor" style="display:none">
+            <div class="flex justify-between items-center mb-16">
+              <div>
+                <div class="card-title" id="receta-prod-nombre">—</div>
+                <div class="hint">Costo total = base + insumos seleccionados</div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="guardarReceta()">💾 Guardar</button>
+            </div>
+
+            <div class="form-group">
+              <label>Costo base del producto ($)</label>
+              <input type="number" id="receta-costo-base" placeholder="Ej: 3500" oninput="recalcReceta()">
+              <div class="hint">Material principal: taza en blanco, vaso, etc.</div>
+            </div>
+
+            <div class="form-group">
+              <label>Costo de producción / mano de obra ($)</label>
+              <input type="number" id="receta-costo-produccion" placeholder="Ej: 800" oninput="recalcReceta()">
+              <div class="hint">Sublimación, grabado, impresión, tiempo, etc.</div>
+            </div>
+
+            <div style="margin-bottom:16px">
+              <div class="text-xs text-muted mb-8" style="text-transform:uppercase;letter-spacing:0.5px">Insumos adicionales</div>
+              <div id="receta-insumos-check" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+              <div id="receta-no-insumos" class="hint" style="display:none">No hay insumos cargados todavía. Agregá uno arriba.</div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="flex justify-between items-center mt-16">
+              <span class="text-muted">Costo total calculado:</span>
+              <span class="money-big" id="receta-costo-total">$0</span>
+            </div>
+            <div class="hint mt-8" style="text-align:right">Este valor se usa automáticamente en la Planificación</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== PAGE: PLANIFICACION ===== -->
+    <div id="page-planificacion" class="tab-panel">
+      <div id="no-evento-plan" class="empty" style="display:none">
+        <div class="icon">📅</div>
+        <p>Seleccioná un evento desde la pestaña <strong>Eventos</strong> para planificar</p>
+      </div>
+      <div id="plan-content">
+        <div class="flex items-center justify-between mb-16">
+          <div>
+            <h2 class="section-title" id="plan-event-name">—</h2>
+            <p class="section-sub" id="plan-event-date">—</p>
+          </div>
+          <div class="flex gap-8">
+            <span id="plan-objetivo-badge" class="badge badge-accent"></span>
+          </div>
+        </div>
+
+        <!-- Alertas -->
+        <div id="plan-alerts"></div>
+
+        <!-- Stats resumen -->
+        <div class="grid-4 mb-16" id="plan-stats"></div>
+
+        <!-- Costos fijos -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Costos Fijos del Evento</div><div class="card-subtitle">Stand, transporte, comida y otros</div></div>
+            <button class="btn btn-sm btn-secondary" onclick="saveCostosFijos()">Guardar</button>
+          </div>
+          <div class="grid-4">
+            <div class="form-group">
+              <label>Stand / Espacio</label>
+              <input type="number" id="cf-stand" placeholder="0" oninput="recalcAll()">
+            </div>
+            <div class="form-group">
+              <label>Transporte</label>
+              <input type="number" id="cf-transporte" placeholder="0" oninput="recalcAll()">
+            </div>
+            <div class="form-group">
+              <label>Comida</label>
+              <input type="number" id="cf-comida" placeholder="0" oninput="recalcAll()">
+            </div>
+            <div class="form-group">
+              <label>Otros</label>
+              <input type="number" id="cf-otros" placeholder="0" oninput="recalcAll()">
+            </div>
+          </div>
+          <div class="flex gap-8 items-center">
+            <span class="text-muted text-sm">Total costos fijos:</span>
+            <span class="money-big" id="cf-total">$0</span>
+            <span class="text-muted text-sm ml-8">|</span>
+            <span class="text-muted text-sm">Objetivo (×<span id="cf-mult">?</span>):</span>
+            <span class="money-big" id="cf-objetivo-val" style="color:var(--accent3)">$0</span>
+          </div>
+        </div>
+
+        <!-- Tabla de productos -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Productos a Llevar</div><div class="card-subtitle">Cantidades, costos y precios de venta</div></div>
+            <button class="btn btn-sm btn-secondary" onclick="addProductRow()">+ Agregar producto</button>
+          </div>
+          <div class="table-wrap">
+            <table id="productos-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Costo unit.</th>
+                  <th>Cantidad</th>
+                  <th>Fabricado</th>
+                  <th>A fabricar</th>
+                  <th>% absorbe</th>
+                  <th>Costo real</th>
+                  <th>Precio sugerido</th>
+                  <th>Precio venta</th>
+                  <th>Precio c/desc.</th>
+                  <th>Gan. unit.</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="productos-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Simulador -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">🎯 Simulador de Ventas</div><div class="card-subtitle">¿Qué pasa si vendés X% del stock?</div></div>
+          </div>
+          <div class="form-group">
+            <label>Porcentaje del stock que vendés: <strong id="sim-pct-label" style="color:var(--accent)">70%</strong></label>
+            <input type="range" class="sim-slider" id="sim-slider" min="0" max="100" value="70" oninput="updateSimulator()">
+          </div>
+          <div class="sim-result" id="sim-result">
+            <p style="color:var(--text3)">Completá los productos para usar el simulador</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== PAGE: CIERRE ===== -->
+    <div id="page-cierre" class="tab-panel">
+      <div id="no-evento-cierre" class="empty" style="display:none">
+        <div class="icon">✅</div>
+        <p>Seleccioná un evento desde la pestaña <strong>Eventos</strong> para registrar el cierre</p>
+      </div>
+      <div id="cierre-content">
+        <div class="flex items-center justify-between mb-16">
+          <div>
+            <h2 class="section-title" id="cierre-event-name">—</h2>
+            <p class="section-sub">Registrá cuánto volvió de cada producto</p>
+          </div>
+          <button class="btn btn-success" onclick="saveCierre()">💾 Guardar cierre</button>
+        </div>
+
+        <div class="grid-4 mb-16" id="cierre-stats"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Registro de Vuelta</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Llevaste</th>
+                  <th>Volvieron</th>
+                  <th>Vendido</th>
+                  <th>Precio venta</th>
+                  <th>Ingreso estimado</th>
+                  <th>Costo real total</th>
+                  <th>Ganancia</th>
+                </tr>
+              </thead>
+              <tbody id="cierre-tbody"></tbody>
+              <tfoot>
+                <tr style="border-top: 2px solid var(--border);">
+                  <td colspan="5" class="font-bold text-muted text-sm">TOTALES</td>
+                  <td class="font-bold text-accent" id="cierre-total-ingresos">$0</td>
+                  <td class="font-bold text-muted" id="cierre-total-costos">$0</td>
+                  <td class="font-bold" id="cierre-total-ganancia">$0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div id="cierre-resultado" class="card" style="display:none">
+          <div class="card-title mb-16">Resultado del Evento</div>
+          <div class="grid-4" id="cierre-resultado-stats"></div>
+          <div class="mt-16">
+            <div class="flex justify-between mb-8">
+              <span class="text-muted text-sm">Progreso hacia el objetivo</span>
+              <span id="cierre-prog-label" class="text-sm font-bold"></span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="cierre-prog-fill" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: COMPARATIVA ===== -->
+    <div id="page-comparativa" class="tab-panel">
+      <h2 class="section-title">Comparativa de Eventos</h2>
+      <p class="section-sub">Analizá el rendimiento entre ferias</p>
+      <div id="comparativa-content"></div>
+    </div>
+
+    <!-- ===== PAGE: CHECKLIST ===== -->
+    <div id="page-checklist" class="tab-panel">
+      <div class="flex items-center justify-between mb-16">
+        <div>
+          <h2 class="section-title">Checklist del Stand</h2>
+          <p class="section-sub">Todo lo que necesitás llevar al evento</p>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-secondary btn-sm" onclick="resetChecklist()">↺ Desmarcar todo</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Agregar ítem</div>
+        </div>
+        <div class="inline-add">
+          <input type="text" id="new-check-item" placeholder="Ej: Mantel negro, fibrones, precio en carteles..." 
+            onkeydown="if(event.key==='Enter') addChecklistItem()">
+          <select id="new-check-cat" style="width:160px">
+            <option value="stand">Stand</option>
+            <option value="ventas">Ventas</option>
+            <option value="logistica">Logística</option>
+            <option value="personal">Personal</option>
+          </select>
+          <button class="btn btn-primary" onclick="addChecklistItem()">+ Agregar</button>
+        </div>
+      </div>
+
+      <div id="checklist-categorias"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL INSUMO -->
+<div id="modal-insumo" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:center; justify-content:center;" onclick="if(event.target.id==='modal-insumo')cerrarModalInsumo()">
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:32px; width:420px; max-width:95vw;" onclick="event.stopPropagation()">
+    <h3 style="font-family:'Syne',sans-serif; font-size:16px; font-weight:800; margin-bottom:20px;" id="modal-insumo-titulo">Nuevo Insumo</h3>
+    <input type="hidden" id="insumo-edit-id">
+    <div class="form-group">
+      <label>Nombre</label>
+      <input type="text" id="insumo-nombre" placeholder="Ej: Cajita individual, Bolsa celofán...">
+    </div>
+    <div class="form-group">
+      <label>Costo unitario ($)</label>
+      <input type="number" id="insumo-costo" placeholder="0">
+    </div>
+    <div class="flex gap-8 justify-between mt-16">
+      <button class="btn btn-secondary" onclick="cerrarModalInsumo()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarInsumo()">Guardar insumo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO EVENTO -->
+<div id="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:center; justify-content:center;" onclick="closeModal(event)">
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:32px; width:500px; max-width:95vw;" onclick="event.stopPropagation()">
+    <h3 style="font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-bottom:24px;">Nuevo Evento</h3>
+    <div class="form-group">
+      <label>Nombre del evento</label>
+      <input type="text" id="modal-nombre" placeholder="Ej: Anicon 2026">
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" id="modal-fecha">
+      </div>
+      <div class="form-group">
+        <label>Objetivo (multiplicador)</label>
+        <select id="modal-objetivo">
+          <option value="1.5">×1.5 — Recuperar + 50%</option>
+          <option value="2" selected>×2 — Duplicar inversión</option>
+          <option value="2.5">×2.5 — Recuperar + 150%</option>
+          <option value="3">×3 — Triplicar inversión</option>
+          <option value="custom">Personalizado...</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" id="modal-custom-obj" style="display:none">
+      <label>Multiplicador personalizado</label>
+      <input type="number" id="modal-obj-custom" placeholder="Ej: 2.2" step="0.1" min="1">
+    </div>
+    <div class="form-group">
+      <label>Notas (opcional)</label>
+      <textarea id="modal-notas" rows="2" placeholder="Ubicación, organizador, observaciones..." style="resize:vertical"></textarea>
+    </div>
+    <div class="flex gap-8 justify-between mt-24">
+      <button class="btn btn-secondary" onclick="hideModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="crearEvento()">Crear Evento →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA & STORAGE
+// ============================================================
+
+const STORAGE_KEY = 'laguarida_ferias_v2';
+
+const PRODUCTOS_DEFAULT = [
+  { nombre: 'Botella',                              costo: 4385  },
+  { nombre: 'BOX',                                  costo: 36808 },
+  { nombre: 'Chopp',                                costo: 6413  },
+  { nombre: 'Hoppy',                                costo: 6127  },
+  { nombre: 'Hoppy Mágico',                         costo: 7260  },
+  { nombre: 'Jarros térmicos',                      costo: 4018  },
+  { nombre: 'Latas',                                costo: 12937 },
+  { nombre: 'Llavero',                              costo: 1490  },
+  { nombre: 'Posavasos',                            costo: 1268  },
+  { nombre: 'Sensor',                               costo: 10955 },
+  { nombre: 'Stickers',                             costo: 255   },
+  { nombre: 'Straw 500 ML',                         costo: 14997 },
+  { nombre: 'Tarjeta',                              costo: 1312  },
+  { nombre: 'Taza 3D',                              costo: 13746 },
+  { nombre: 'Taza con boca',                        costo: 3291  },
+  { nombre: 'Taza de ceramica',                     costo: 3057  },
+  { nombre: 'Taza mágica',                          costo: 5534  },
+  { nombre: 'Taza mágica 3D',                       costo: 5768  },
+  { nombre: 'Taza plástica',                        costo: 2292  },
+  { nombre: 'Tazones',                              costo: 10065 },
+  { nombre: 'Termos 500 ml',                        costo: 14352 },
+  { nombre: 'Torre',                                costo: 14482 },
+  { nombre: 'Vaso de vidrio Grabado + Posavaso',    costo: 3980  },
+  { nombre: 'Vaso que brilla en la Oscuridad',      costo: 19732 },
+  { nombre: 'Vaso Quencher 900 ml',                 costo: 15988 },
+  { nombre: 'Vaso Tipo Jarro Sublimable de Colores',costo: 5150  },
+  { nombre: 'Vaos con Glitter de 750 para UV',      costo: 22910 },
+  { nombre: 'Vasos Pampa',                          costo: 2922  },
+  { nombre: 'XL 1.2',                               costo: 27429 },
+];
+
+// Insumos iniciales precargados
+const INSUMOS_DEFAULT = [
+  { id: 1, nombre: 'Cajita individual',     costo: 350  },
+  { id: 2, nombre: 'Bolsa celofán',         costo: 80   },
+  { id: 3, nombre: 'Papel tissue',          costo: 50   },
+  { id: 4, nombre: 'Sticker de marca',      costo: 60   },
+  { id: 5, nombre: 'Caja grande (set)',     costo: 800  },
+  { id: 6, nombre: 'Sublimación',           costo: 500  },
+  { id: 7, nombre: 'Bolsa kraft',           costo: 120  },
+];
+
+const CHECKLIST_DEFAULT = [
+  { id: 1, texto: 'Mantel negro', cat: 'stand', checked: false },
+  { id: 2, texto: 'Cartelería de precios', cat: 'ventas', checked: false },
+  { id: 3, texto: 'Fibrones gruesos', cat: 'stand', checked: false },
+  { id: 4, texto: 'Tijeras', cat: 'stand', checked: false },
+  { id: 5, texto: 'Cinta adhesiva', cat: 'stand', checked: false },
+  { id: 6, texto: 'Calculadora', cat: 'ventas', checked: false },
+  { id: 7, texto: 'Cambio en efectivo', cat: 'ventas', checked: false },
+  { id: 8, texto: 'Código QR para pagos', cat: 'ventas', checked: false },
+  { id: 9, texto: 'Bolsas para empacar', cat: 'ventas', checked: false },
+  { id: 10, texto: 'Papel de regalo / relleno', cat: 'stand', checked: false },
+  { id: 11, texto: 'Snacks y agua', cat: 'personal', checked: false },
+  { id: 12, texto: 'Cargador de celular', cat: 'personal', checked: false },
+  { id: 13, texto: 'Soporte / atril para exhibición', cat: 'stand', checked: false },
+  { id: 14, texto: 'Abrochadora', cat: 'stand', checked: false },
+  { id: 15, texto: 'Lista de precios impresa', cat: 'ventas', checked: false },
+  { id: 16, texto: 'Cajas para llevar mercadería', cat: 'logistica', checked: false },
+  { id: 17, texto: 'Almohadillas antideslizantes', cat: 'stand', checked: false },
+  { id: 18, texto: 'DNI / credencial del evento', cat: 'personal', checked: false },
+];
+
+let state = {
+  eventos: [],
+  activeEventId: null,
+  checklist: [...CHECKLIST_DEFAULT],
+  insumos: [],       // { id, nombre, costo }
+  recetas: {},       // { [nombreProducto]: { costoBase, costoProduccion, insumos: [id,...] } }
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      state = { ...state, ...saved };
+    }
+    // Si no hay insumos todavía, cargar los default
+    if (!state.insumos || state.insumos.length === 0) {
+      state.insumos = [...INSUMOS_DEFAULT];
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function getActiveEvent() {
+  return state.eventos.find(e => e.id === state.activeEventId) || null;
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+function showPage(page) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+
+  if (page === 'planificacion') renderPlanificacion();
+  if (page === 'cierre') renderCierre();
+  if (page === 'comparativa') renderComparativa();
+  if (page === 'checklist') renderChecklist();
+  if (page === 'recetario') renderRecetario();
+}
+
+// Devuelve el costo real de un producto según su receta, o el default si no tiene
+function getCostoProducto(nombre) {
+  const rec = state.recetas[nombre];
+  if (!rec) {
+    // fallback al default
+    const def = PRODUCTOS_DEFAULT.find(p => p.nombre === nombre);
+    return def ? def.costo : 0;
+  }
+  const base = rec.costoBase || 0;
+  const prod = rec.costoProduccion || 0;
+  const insTotal = (rec.insumos || []).reduce((s, id) => {
+    const ins = state.insumos.find(i => i.id === id);
+    return s + (ins ? ins.costo : 0);
+  }, 0);
+  return base + prod + insTotal;
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+
+function openNewEventModal() {
+  document.getElementById('modal-overlay').style.display = 'flex';
+  document.getElementById('modal-nombre').focus();
+}
+
+function hideModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+  document.getElementById('modal-nombre').value = '';
+  document.getElementById('modal-fecha').value = '';
+  document.getElementById('modal-objetivo').value = '2';
+  document.getElementById('modal-notas').value = '';
+  document.getElementById('modal-custom-obj').style.display = 'none';
+}
+
+function closeModal(e) {
+  if (e.target.id === 'modal-overlay') hideModal();
+}
+
+document.getElementById('modal-objetivo').addEventListener('change', function() {
+  document.getElementById('modal-custom-obj').style.display = this.value === 'custom' ? 'block' : 'none';
+});
+
+function crearEvento() {
+  const nombre = document.getElementById('modal-nombre').value.trim();
+  if (!nombre) { alert('Ingresá un nombre para el evento'); return; }
+  const fecha = document.getElementById('modal-fecha').value;
+  let objetivo = parseFloat(document.getElementById('modal-objetivo').value);
+  if (isNaN(objetivo)) {
+    objetivo = parseFloat(document.getElementById('modal-obj-custom').value);
+    if (isNaN(objetivo) || objetivo < 1) { alert('Ingresá un multiplicador válido'); return; }
+  }
+  const notas = document.getElementById('modal-notas').value.trim();
+
+  const evento = {
+    id: Date.now(),
+    nombre, fecha, objetivo, notas,
+    costosFijos: { stand: 0, transporte: 0, comida: 0, otros: 0 },
+    productos: PRODUCTOS_DEFAULT.filter(p =>
+      ['Posavasos','Taza de ceramica','Taza mágica','Taza con boca','Chopp','Hoppy','Latas','XL 1.2','Tazones','Botella'].includes(p.nombre)
+    ).map(p => ({
+      nombre: p.nombre,
+      costo: getCostoProducto(p.nombre),
+      cantidad: 0,
+      fabricado: 0,
+      precioVenta: 0,
+      cerrado: false,
+      volvieron: 0,
+    })),
+    cerrado: false,
+  };
+
+  state.eventos.push(evento);
+  state.activeEventId = evento.id;
+  saveState();
+  hideModal();
+  renderEventos();
+  showPage('planificacion');
+}
+
+// ============================================================
+// EVENTOS PAGE
+// ============================================================
+
+function renderEventos() {
+  const container = document.getElementById('eventos-list');
+  if (state.eventos.length === 0) {
+    container.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="icon">🎪</div><p>No tenés eventos todavía. Creá uno para empezar.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = state.eventos.map(ev => {
+    const totalCostosFijos = sumCF(ev);
+    const totalInventario = ev.productos.reduce((s, p) => s + p.costo * p.cantidad, 0);
+    const totalInversion = totalCostosFijos + totalInventario;
+    const objetivo = totalInversion * ev.objetivo;
+    const isActive = ev.id === state.activeEventId;
+
+    // Calcular si tiene cierre
+    const tieneCierre = ev.cerrado || ev.productos.some(p => p.volvieron > 0);
+    let ingresoReal = 0;
+    if (tieneCierre) {
+      ingresoReal = ev.productos.reduce((s, p) => {
+        const vendido = p.cantidad - (p.volvieron || 0);
+        return s + vendido * (p.precioVenta || 0);
+      }, 0);
+    }
+
+    return `
+    <div class="event-card ${isActive ? 'active-event' : ''}" onclick="selectEvent(${ev.id})">
+      <div class="flex justify-between items-center mb-8">
+        <h3>${ev.nombre}</h3>
+        ${isActive ? '<span class="badge badge-accent">Activo</span>' : ''}
+      </div>
+      <div class="event-meta mb-16">
+        ${ev.fecha ? '📅 ' + formatDate(ev.fecha) : 'Sin fecha'} &nbsp;·&nbsp; 
+        Objetivo ×${ev.objetivo}
+      </div>
+      <div class="divider" style="margin:12px 0"></div>
+      <div class="grid-2">
+        <div>
+          <div class="text-xs text-muted">Inversión total</div>
+          <div class="money" style="color:var(--text)">${fmt(totalInversion)}</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted">A vender</div>
+          <div class="money" style="color:var(--accent3)">${fmt(objetivo)}</div>
+        </div>
+      </div>
+      ${tieneCierre ? `
+      <div class="divider" style="margin:12px 0"></div>
+      <div class="text-xs text-muted mb-4">Ingreso real</div>
+      <div class="money" style="color:${ingresoReal >= objetivo ? 'var(--accent3)' : 'var(--danger)'}">${fmt(ingresoReal)}</div>
+      ` : ''}
+      <div class="flex gap-8 mt-16">
+        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); selectEvent(${ev.id}); showPage('planificacion')">Planificar</button>
+        <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); selectEvent(${ev.id}); showPage('cierre')">Cierre</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteEvent(${ev.id})" style="margin-left:auto">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectEvent(id) {
+  state.activeEventId = id;
+  saveState();
+  renderEventos();
+}
+
+function deleteEvent(id) {
+  if (!confirm('¿Eliminar este evento? Se perderán todos los datos.')) return;
+  state.eventos = state.eventos.filter(e => e.id !== id);
+  if (state.activeEventId === id) state.activeEventId = state.eventos[0]?.id || null;
+  saveState();
+  renderEventos();
+}
+
+// ============================================================
+// PLANIFICACION
+// ============================================================
+
+function renderPlanificacion() {
+  const ev = getActiveEvent();
+  if (!ev) {
+    document.getElementById('no-evento-plan').style.display = 'block';
+    document.getElementById('plan-content').style.display = 'none';
+    return;
+  }
+  document.getElementById('no-evento-plan').style.display = 'none';
+  document.getElementById('plan-content').style.display = 'block';
+
+  document.getElementById('plan-event-name').textContent = ev.nombre;
+  document.getElementById('plan-event-date').textContent = ev.fecha ? formatDate(ev.fecha) : 'Sin fecha';
+  document.getElementById('cf-mult').textContent = ev.objetivo;
+  document.getElementById('plan-objetivo-badge').textContent = `Objetivo ×${ev.objetivo}`;
+
+  // Costos fijos
+  document.getElementById('cf-stand').value = ev.costosFijos.stand || '';
+  document.getElementById('cf-transporte').value = ev.costosFijos.transporte || '';
+  document.getElementById('cf-comida').value = ev.costosFijos.comida || '';
+  document.getElementById('cf-otros').value = ev.costosFijos.otros || '';
+
+  renderProductosTable();
+  recalcAll();
+}
+
+function saveCostosFijos() {
+  const ev = getActiveEvent();
+  if (!ev) return;
+  ev.costosFijos = {
+    stand: parseFloat(document.getElementById('cf-stand').value) || 0,
+    transporte: parseFloat(document.getElementById('cf-transporte').value) || 0,
+    comida: parseFloat(document.getElementById('cf-comida').value) || 0,
+    otros: parseFloat(document.getElementById('cf-otros').value) || 0,
+  };
+  saveState();
+  recalcAll();
+}
+
+function sumCF(ev) {
+  return (ev.costosFijos.stand || 0) + (ev.costosFijos.transporte || 0) +
+         (ev.costosFijos.comida || 0) + (ev.costosFijos.otros || 0);
+}
+
+function renderProductosTable() {
+  const ev = getActiveEvent();
+  if (!ev) return;
+  const tbody = document.getElementById('productos-tbody');
+
+  tbody.innerHTML = ev.productos.map((p, i) => `
+    <tr id="row-${i}">
+      <td>
+        <select onchange="changeProducto(${i}, this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:200px">
+          ${PRODUCTOS_DEFAULT.map(pd => `<option value="${pd.nombre}" ${pd.nombre === p.nombre ? 'selected' : ''}>${pd.nombre}</option>`).join('')}
+        </select>
+      </td>
+      <td class="money text-muted">${fmt(p.costo)}</td>
+      <td><input type="number" min="0" value="${p.cantidad || ''}" placeholder="0" onchange="updateProducto(${i}, 'cantidad', this.value)"></td>
+      <td><input type="number" min="0" value="${p.fabricado || ''}" placeholder="0" onchange="updateProducto(${i}, 'fabricado', this.value)"></td>
+      <td id="afab-${i}" class="font-bold"></td>
+      <td id="pct-${i}" class="text-muted text-sm"></td>
+      <td id="creal-${i}" class="money"></td>
+      <td id="psug-${i}" class="money" style="color:var(--accent3)"></td>
+      <td><input type="number" min="0" value="${p.precioVenta || ''}" placeholder="0" onchange="updateProducto(${i}, 'precioVenta', this.value)" id="pventa-${i}"></td>
+      <td id="pdesc-${i}" class="money text-muted"></td>
+      <td id="gunit-${i}" class="money"></td>
+      <td id="estado-${i}"></td>
+      <td><button class="btn-icon" onclick="removeProducto(${i})">✕</button></td>
+    </tr>
+  `).join('');
+
+  recalcAll();
+}
+
+function changeProducto(i, nombre) {
+  const ev = getActiveEvent();
+  ev.productos[i].nombre = nombre;
+  ev.productos[i].costo = getCostoProducto(nombre);
+  saveState();
+  renderProductosTable();
+}
+
+function updateProducto(i, field, val) {
+  const ev = getActiveEvent();
+  ev.productos[i][field] = parseFloat(val) || 0;
+  saveState();
+  recalcAll();
+}
+
+function addProductRow() {
+  const ev = getActiveEvent();
+  const nombre = PRODUCTOS_DEFAULT[0].nombre;
+  ev.productos.push({ nombre, costo: getCostoProducto(nombre), cantidad: 0, fabricado: 0, precioVenta: 0 });
+  saveState();
+  renderProductosTable();
+}
+
+function removeProducto(i) {
+  const ev = getActiveEvent();
+  ev.productos.splice(i, 1);
+  saveState();
+  renderProductosTable();
+}
+
+function recalcAll() {
+  const ev = getActiveEvent();
+  if (!ev) return;
+
+  // Leer costos fijos del DOM
+  ev.costosFijos = {
+    stand: parseFloat(document.getElementById('cf-stand').value) || 0,
+    transporte: parseFloat(document.getElementById('cf-transporte').value) || 0,
+    comida: parseFloat(document.getElementById('cf-comida').value) || 0,
+    otros: parseFloat(document.getElementById('cf-otros').value) || 0,
+  };
+
+  const totalCF = sumCF(ev);
+  const totalInventarioCosto = ev.productos.reduce((s, p) => s + p.costo * (p.cantidad || 0), 0);
+  const totalInversion = totalCF + totalInventarioCosto;
+  const objetivo = totalInversion * ev.objetivo;
+
+  document.getElementById('cf-total').textContent = fmt(totalCF);
+  document.getElementById('cf-objetivo-val').textContent = fmt(objetivo);
+
+  // Calcular por producto
+  ev.productos.forEach((p, i) => {
+    const cant = p.cantidad || 0;
+    const productoCostoTotal = p.costo * cant;
+    const pct = totalInventarioCosto > 0 ? productoCostoTotal / totalInventarioCosto : 0;
+    const costoFijoAbsorbido = pct * totalCF;
+    const costoFijoPorUnidad = cant > 0 ? costoFijoAbsorbido / cant : 0;
+    const costoReal = p.costo + costoFijoPorUnidad;
+    const precioSugerido = costoReal * ev.objetivo;
+    const precioDesc = (p.precioVenta || 0) * 0.9;
+    const gananciaUnit = (p.precioVenta || 0) - costoReal;
+    const aFabricar = Math.max(0, cant - (p.fabricado || 0));
+
+    // Estado
+    let estado = '';
+    if (p.precioVenta > 0 && p.precioVenta < costoReal) {
+      estado = '<span class="badge badge-danger">⚠ Pérdida</span>';
+    } else if (p.precioVenta > 0 && p.precioVenta >= precioSugerido) {
+      estado = '<span class="badge badge-ok">✓ Ok</span>';
+    } else if (p.precioVenta > 0) {
+      estado = '<span class="badge badge-warn">~ Justo</span>';
+    }
+
+    const afabEl = document.getElementById(`afab-${i}`);
+    if (afabEl) {
+      afabEl.textContent = aFabricar > 0 ? aFabricar : '—';
+      afabEl.style.color = aFabricar > 0 ? 'var(--warn)' : 'var(--accent3)';
+
+      document.getElementById(`pct-${i}`).textContent = cant > 0 ? (pct * 100).toFixed(1) + '%' : '—';
+      document.getElementById(`creal-${i}`).textContent = cant > 0 ? fmt(costoReal) : '—';
+      document.getElementById(`psug-${i}`).textContent = cant > 0 ? fmt(precioSugerido) : '—';
+      document.getElementById(`pdesc-${i}`).textContent = p.precioVenta > 0 ? fmt(precioDesc) : '—';
+      document.getElementById(`gunit-${i}`).textContent = p.precioVenta > 0 && cant > 0 ? fmt(gananciaUnit) : '—';
+      document.getElementById(`gunit-${i}`).style.color = gananciaUnit >= 0 ? 'var(--accent3)' : 'var(--danger)';
+      document.getElementById(`estado-${i}`).innerHTML = estado;
+    }
+  });
+
+  // Stats
+  const totalPrecioVenta = ev.productos.reduce((s, p) => s + (p.precioVenta || 0) * (p.cantidad || 0), 0);
+  const totalAFabricar = ev.productos.reduce((s, p) => s + Math.max(0, (p.cantidad || 0) - (p.fabricado || 0)), 0);
+  const productosConPrecio = ev.productos.filter(p => p.precioVenta > 0 && p.cantidad > 0).length;
+  const productosEnPerdida = ev.productos.filter((p, i) => {
+    const cant = p.cantidad || 0;
+    if (!cant || !p.precioVenta) return false;
+    const productoCostoTotal = p.costo * cant;
+    const pct = totalInventarioCosto > 0 ? productoCostoTotal / totalInventarioCosto : 0;
+    const costoFijoAbsorbido = pct * totalCF;
+    const costoFijoPorUnidad = cant > 0 ? costoFijoAbsorbido / cant : 0;
+    const costoReal = p.costo + costoFijoPorUnidad;
+    return p.precioVenta < costoReal;
+  }).length;
+
+  document.getElementById('plan-stats').innerHTML = `
+    <div class="stat-box">
+      <div class="stat-label">Inversión Total</div>
+      <div class="stat-value">${fmt(totalInversion)}</div>
+      <div class="stat-sub">CF: ${fmt(totalCF)} + Mercadería: ${fmt(totalInventarioCosto)}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Objetivo (×${ev.objetivo})</div>
+      <div class="stat-value" style="color:var(--accent3)">${fmt(objetivo)}</div>
+      <div class="stat-sub">Hay que llegar acá para cumplir el objetivo</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Si vendés todo</div>
+      <div class="stat-value" style="color:${totalPrecioVenta >= objetivo ? 'var(--accent3)' : 'var(--danger)'}">${fmt(totalPrecioVenta)}</div>
+      <div class="stat-sub">${totalPrecioVenta >= objetivo ? '✓ Alcanza el objetivo' : '✗ No alcanza el objetivo'}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">A fabricar todavía</div>
+      <div class="stat-value" style="color:${totalAFabricar > 0 ? 'var(--warn)' : 'var(--accent3)'}">${totalAFabricar}</div>
+      <div class="stat-sub">unidades pendientes de fabricación</div>
+    </div>
+  `;
+
+  // Alertas
+  const alerts = [];
+  if (productosEnPerdida > 0) {
+    alerts.push(`<div class="alert alert-danger">⚠️ <strong>${productosEnPerdida} producto(s)</strong> tienen precio de venta por debajo del costo real. Revisá los marcados en rojo.</div>`);
+  }
+  if (totalAFabricar > 0) {
+    alerts.push(`<div class="alert alert-warn">🔨 Tenés <strong>${totalAFabricar} unidades</strong> por fabricar antes del evento.</div>`);
+  }
+  if (totalPrecioVenta > 0 && totalPrecioVenta < objetivo) {
+    alerts.push(`<div class="alert alert-danger">🎯 Incluso vendiendo todo, <strong>no alcanzás el objetivo</strong>. Necesitás ${fmt(objetivo - totalPrecioVenta)} más.</div>`);
+  }
+  if (totalPrecioVenta >= objetivo && productosConPrecio > 0) {
+    alerts.push(`<div class="alert alert-ok">✅ Con todos los precios cargados, el stock alcanza para cumplir el objetivo vendiendo todo.</div>`);
+  }
+  document.getElementById('plan-alerts').innerHTML = alerts.join('');
+
+  updateSimulator();
+}
+
+function updateSimulator() {
+  const ev = getActiveEvent();
+  if (!ev) return;
+  const pct = parseInt(document.getElementById('sim-slider').value);
+  document.getElementById('sim-pct-label').textContent = pct + '%';
+
+  const totalCF = sumCF(ev);
+  const totalInventarioCosto = ev.productos.reduce((s, p) => s + p.costo * (p.cantidad || 0), 0);
+  const totalInversion = totalCF + totalInventarioCosto;
+  const objetivo = totalInversion * ev.objetivo;
+
+  const ingresoSimulado = ev.productos.reduce((s, p) => {
+    return s + (p.precioVenta || 0) * (p.cantidad || 0) * (pct / 100);
+  }, 0);
+
+  const alcanza = ingresoSimulado >= objetivo;
+  const diff = Math.abs(ingresoSimulado - objetivo);
+
+  document.getElementById('sim-result').className = 'sim-result ' + (alcanza ? 'alcanza' : 'no-alcanza');
+  document.getElementById('sim-result').innerHTML = `
+    <div style="font-family:'Syne',sans-serif; font-size:28px; font-weight:800; color:${alcanza ? 'var(--accent3)' : 'var(--danger)'}; margin-bottom:8px">
+      ${fmt(ingresoSimulado)}
+    </div>
+    <div style="font-size:14px; color:var(--text2); margin-bottom:16px">
+      Ingreso estimado vendiendo el ${pct}% del stock
+    </div>
+    <div style="font-size:15px; color:${alcanza ? 'var(--accent3)' : 'var(--danger)'}; font-weight:600">
+      ${alcanza ? `✅ Alcanzás el objetivo. Te sobran ${fmt(diff)}` : `❌ No alcanzás el objetivo. Te faltan ${fmt(diff)}`}
+    </div>
+    <div style="margin-top:16px">
+      <div class="progress-bar">
+        <div class="progress-fill ${alcanza ? 'ok' : 'danger'}" style="width:${Math.min(100, (ingresoSimulado/objetivo)*100).toFixed(1)}%"></div>
+      </div>
+      <div class="text-xs text-muted mt-8">${((ingresoSimulado/objetivo)*100).toFixed(1)}% del objetivo</div>
+    </div>
+  `;
+}
+
+function saveCostosFijosAndRecalc() {
+  saveCostosFijos();
+}
+
+// ============================================================
+// CIERRE
+// ============================================================
+
+function renderCierre() {
+  const ev = getActiveEvent();
+  if (!ev) {
+    document.getElementById('no-evento-cierre').style.display = 'block';
+    document.getElementById('cierre-content').style.display = 'none';
+    return;
+  }
+  document.getElementById('no-evento-cierre').style.display = 'none';
+  document.getElementById('cierre-content').style.display = 'block';
+  document.getElementById('cierre-event-name').textContent = ev.nombre;
+
+  const tbody = document.getElementById('cierre-tbody');
+  const totalCF = sumCF(ev);
+  const totalInventarioCosto = ev.productos.reduce((s, p) => s + p.costo * (p.cantidad || 0), 0);
+
+  tbody.innerHTML = ev.productos.filter(p => p.cantidad > 0).map((p, i) => {
+    const cant = p.cantidad || 0;
+    const productoCostoTotal = p.costo * cant;
+    const pct = totalInventarioCosto > 0 ? productoCostoTotal / totalInventarioCosto : 0;
+    const costoFijoAbsorbido = pct * totalCF;
+    const costoFijoPorUnidad = cant > 0 ? costoFijoAbsorbido / cant : 0;
+    const costoReal = p.costo + costoFijoPorUnidad;
+    const volvieron = p.volvieron || 0;
+    const vendido = cant - volvieron;
+    const ingreso = vendido * (p.precioVenta || 0);
+    const costoTotalVendido = vendido * costoReal;
+    const ganancia = ingreso - costoTotalVendido;
+
+    return `
+    <tr>
+      <td class="font-bold">${p.nombre}</td>
+      <td>${cant}</td>
+      <td><input type="number" min="0" max="${cant}" value="${volvieron}" placeholder="0" 
+          onchange="updateVolvieron('${p.nombre}', this.value)" style="width:80px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:var(--radius-sm);font-size:13px;outline:none;"></td>
+      <td class="font-bold" style="color:${vendido > 0 ? 'var(--accent)' : 'var(--text3)'}">${vendido}</td>
+      <td class="money">${fmt(p.precioVenta || 0)}</td>
+      <td class="money text-accent">${fmt(ingreso)}</td>
+      <td class="money text-muted">${fmt(costoTotalVendido)}</td>
+      <td class="money" style="color:${ganancia >= 0 ? 'var(--accent3)' : 'var(--danger)'}">${fmt(ganancia)}</td>
+    </tr>`;
+  }).join('');
+
+  updateCierreTotals();
+}
+
+function updateVolvieron(nombre, val) {
+  const ev = getActiveEvent();
+  const prod = ev.productos.find(p => p.nombre === nombre);
+  if (prod) {
+    prod.volvieron = Math.min(parseFloat(val) || 0, prod.cantidad);
+  }
+  saveState();
+  updateCierreTotals();
+}
+
+function updateCierreTotals() {
+  const ev = getActiveEvent();
+  if (!ev) return;
+
+  const totalCF = sumCF(ev);
+  const totalInventarioCosto = ev.productos.reduce((s, p) => s + p.costo * (p.cantidad || 0), 0);
+  const totalInversion = totalCF + totalInventarioCosto;
+  const objetivo = totalInversion * ev.objetivo;
+
+  let totalIngresos = 0, totalCostosR = 0, totalGanancia = 0, totalVendido = 0;
+
+  ev.productos.filter(p => p.cantidad > 0).forEach(p => {
+    const cant = p.cantidad || 0;
+    const productoCostoTotal = p.costo * cant;
+    const pct = totalInventarioCosto > 0 ? productoCostoTotal / totalInventarioCosto : 0;
+    const costoFijoAbsorbido = pct * totalCF;
+    const costoFijoPorUnidad = cant > 0 ? costoFijoAbsorbido / cant : 0;
+    const costoReal = p.costo + costoFijoPorUnidad;
+    const volvieron = p.volvieron || 0;
+    const vendido = cant - volvieron;
+    totalIngresos += vendido * (p.precioVenta || 0);
+    totalCostosR += vendido * costoReal;
+    totalVendido += vendido;
+  });
+
+  totalGanancia = totalIngresos - totalCostosR;
+
+  document.getElementById('cierre-total-ingresos').textContent = fmt(totalIngresos);
+  document.getElementById('cierre-total-costos').textContent = fmt(totalCostosR);
+  document.getElementById('cierre-total-ganancia').textContent = fmt(totalGanancia);
+  document.getElementById('cierre-total-ganancia').style.color = totalGanancia >= 0 ? 'var(--accent3)' : 'var(--danger)';
+
+  const alcanza = totalIngresos >= objetivo;
+  const progPct = objetivo > 0 ? Math.min(100, (totalIngresos / objetivo) * 100) : 0;
+
+  document.getElementById('cierre-stats').innerHTML = `
+    <div class="stat-box">
+      <div class="stat-label">Total Vendido</div>
+      <div class="stat-value">${totalVendido} uds</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Ingresos Reales</div>
+      <div class="stat-value">${fmt(totalIngresos)}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Ganancia Neta</div>
+      <div class="stat-value" style="color:${totalGanancia >= 0 ? 'var(--accent3)' : 'var(--danger)'}">${fmt(totalGanancia)}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Objetivo (×${ev.objetivo})</div>
+      <div class="stat-value" style="color:${alcanza ? 'var(--accent3)' : 'var(--danger)'}">${alcanza ? '✅ Logrado' : '❌ No logrado'}</div>
+      <div class="stat-sub">${fmt(objetivo)}</div>
+    </div>
+  `;
+
+  document.getElementById('cierre-resultado').style.display = 'block';
+  document.getElementById('cierre-prog-label').textContent = progPct.toFixed(1) + '% del objetivo';
+  document.getElementById('cierre-prog-label').style.color = alcanza ? 'var(--accent3)' : 'var(--danger)';
+  const fill = document.getElementById('cierre-prog-fill');
+  fill.style.width = progPct + '%';
+  fill.className = 'progress-fill ' + (alcanza ? 'ok' : 'danger');
+}
+
+function saveCierre() {
+  saveState();
+  alert('✅ Cierre guardado correctamente');
+}
+
+// ============================================================
+// COMPARATIVA
+// ============================================================
+
+function renderComparativa() {
+  const container = document.getElementById('comparativa-content');
+  const eventos = state.eventos.filter(ev => ev.productos.some(p => p.volvieron > 0 || p.cantidad > 0));
+
+  if (eventos.length === 0) {
+    container.innerHTML = `<div class="empty"><div class="icon">📊</div><p>Necesitás al menos un evento con datos para ver la comparativa</p></div>`;
+    return;
+  }
+
+  // Tabla resumen
+  const rows = eventos.map(ev => {
+    const totalCF = sumCF(ev);
+    const totalInventarioCosto = ev.productos.reduce((s, p) => s + p.costo * (p.cantidad || 0), 0);
+    const totalInversion = totalCF + totalInventarioCosto;
+    const objetivo = totalInversion * ev.objetivo;
+    const totalIngresos = ev.productos.reduce((s, p) => {
+      const vendido = (p.cantidad || 0) - (p.volvieron || 0);
+      return s + vendido * (p.precioVenta || 0);
+    }, 0);
+    const totalCostosR = ev.productos.reduce((s, p) => {
+      const cant = p.cantidad || 0;
+      const productoCostoTotal = p.costo * cant;
+      const pct = totalInventarioCosto > 0 ? productoCostoTotal / totalInventarioCosto : 0;
+      const costoFijoAbsorbido = pct * totalCF;
+      const costoFijoPorUnidad = cant > 0 ? costoFijoAbsorbido / cant : 0;
+      const costoReal = p.costo + costoFijoPorUnidad;
+      const vendido = cant - (p.volvieron || 0);
+      return s + vendido * costoReal;
+    }, 0);
+    const ganancia = totalIngresos - totalCostosR;
+    const roi = totalInversion > 0 ? (ganancia / totalInversion) * 100 : 0;
+    const alcanza = totalIngresos >= objetivo;
+    const progPct = objetivo > 0 ? Math.min(100, (totalIngresos / objetivo) * 100) : 0;
+
+    return { ev, totalInversion, objetivo, totalIngresos, ganancia, roi, alcanza, progPct };
+  });
+
+  container.innerHTML = `
+    <div class="card mb-16">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Evento</th>
+              <th>Fecha</th>
+              <th>Inversión</th>
+              <th>Objetivo</th>
+              <th>Ingresos reales</th>
+              <th>Ganancia</th>
+              <th>ROI</th>
+              <th>Progreso</th>
+              <th>Resultado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+            <tr>
+              <td class="font-bold">${r.ev.nombre}</td>
+              <td class="text-muted">${r.ev.fecha ? formatDate(r.ev.fecha) : '—'}</td>
+              <td class="money">${fmt(r.totalInversion)}</td>
+              <td class="money">${fmt(r.objetivo)}</td>
+              <td class="money text-accent">${fmt(r.totalIngresos)}</td>
+              <td class="money" style="color:${r.ganancia >= 0 ? 'var(--accent3)' : 'var(--danger)'}">${fmt(r.ganancia)}</td>
+              <td style="color:${r.roi >= 0 ? 'var(--accent3)' : 'var(--danger)'}">${r.roi.toFixed(1)}%</td>
+              <td style="width:120px">
+                <div class="progress-bar"><div class="progress-fill ${r.alcanza ? 'ok' : 'danger'}" style="width:${r.progPct.toFixed(1)}%"></div></div>
+                <div class="text-xs text-muted mt-8">${r.progPct.toFixed(1)}%</div>
+              </td>
+              <td><span class="badge ${r.alcanza ? 'badge-ok' : 'badge-danger'}">${r.alcanza ? '✓ Logrado' : '✗ No logrado'}</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title mb-16">Productos más rentables (acumulado)</div>
+      ${renderProductosComparativa(eventos)}
+    </div>
+  `;
+}
+
+function renderProductosComparativa(eventos) {
+  const productMap = {};
+  eventos.forEach(ev => {
+    const totalCF = sumCF(ev);
+    const totalInventarioCosto = ev.productos.reduce((s, p) => s + p.costo * (p.cantidad || 0), 0);
+    ev.productos.forEach(p => {
+      const cant = p.cantidad || 0;
+      if (!cant) return;
+      const productoCostoTotal = p.costo * cant;
+      const pct = totalInventarioCosto > 0 ? productoCostoTotal / totalInventarioCosto : 0;
+      const costoFijoAbsorbido = pct * totalCF;
+      const costoFijoPorUnidad = cant > 0 ? costoFijoAbsorbido / cant : 0;
+      const costoReal = p.costo + costoFijoPorUnidad;
+      const vendido = cant - (p.volvieron || 0);
+      const ingreso = vendido * (p.precioVenta || 0);
+      const ganancia = ingreso - vendido * costoReal;
+
+      if (!productMap[p.nombre]) productMap[p.nombre] = { ingreso: 0, ganancia: 0, vendido: 0 };
+      productMap[p.nombre].ingreso += ingreso;
+      productMap[p.nombre].ganancia += ganancia;
+      productMap[p.nombre].vendido += vendido;
+    });
+  });
+
+  const sorted = Object.entries(productMap).sort((a, b) => b[1].ganancia - a[1].ganancia);
+
+  if (sorted.length === 0) return '<p class="text-muted">Sin datos suficientes</p>';
+
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Producto</th><th>Unidades vendidas</th><th>Ingresos totales</th><th>Ganancia total</th></tr></thead>
+    <tbody>
+      ${sorted.map(([nombre, d]) => `
+      <tr>
+        <td class="font-bold">${nombre}</td>
+        <td>${d.vendido}</td>
+        <td class="money text-accent">${fmt(d.ingreso)}</td>
+        <td class="money" style="color:${d.ganancia >= 0 ? 'var(--accent3)' : 'var(--danger)'}">${fmt(d.ganancia)}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+// ============================================================
+// CHECKLIST
+// ============================================================
+
+const CATS = { stand: '🏪 Stand', ventas: '💰 Ventas', logistica: '🚛 Logística', personal: '👤 Personal' };
+
+function renderChecklist() {
+  const container = document.getElementById('checklist-categorias');
+  const cats = Object.keys(CATS);
+
+  container.innerHTML = cats.map(cat => {
+    const items = state.checklist.filter(i => i.cat === cat);
+    if (items.length === 0) return '';
+    const done = items.filter(i => i.checked).length;
+    return `
+    <div class="card mb-16">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${CATS[cat]}</div>
+          <div class="card-subtitle">${done}/${items.length} listos</div>
+        </div>
+        <div class="progress-bar" style="width:120px">
+          <div class="progress-fill ${done === items.length ? 'ok' : 'accent'}" style="width:${items.length > 0 ? (done/items.length*100).toFixed(0) : 0}%"></div>
+        </div>
+      </div>
+      ${items.map(item => `
+      <div class="checklist-item ${item.checked ? 'checked' : ''}" id="chk-${item.id}">
+        <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCheck(${item.id})">
+        <span>${item.texto}</span>
+        <button class="delete-item" onclick="deleteCheckItem(${item.id})">✕</button>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function toggleCheck(id) {
+  const item = state.checklist.find(i => i.id === id);
+  if (item) {
+    item.checked = !item.checked;
+    saveState();
+    renderChecklist();
+  }
+}
+
+function deleteCheckItem(id) {
+  state.checklist = state.checklist.filter(i => i.id !== id);
+  saveState();
+  renderChecklist();
+}
+
+function addChecklistItem() {
+  const texto = document.getElementById('new-check-item').value.trim();
+  const cat = document.getElementById('new-check-cat').value;
+  if (!texto) return;
+  state.checklist.push({ id: Date.now(), texto, cat, checked: false });
+  saveState();
+  document.getElementById('new-check-item').value = '';
+  renderChecklist();
+}
+
+function resetChecklist() {
+  state.checklist.forEach(i => i.checked = false);
+  saveState();
+  renderChecklist();
+}
+
+// ============================================================
+// RECETARIO
+// ============================================================
+
+let recetaActivaNombre = null;
+
+function renderRecetario() {
+  renderInsumosLista();
+  renderRecetaLista();
+}
+
+function renderInsumosLista() {
+  const el = document.getElementById('insumos-lista');
+  if (!state.insumos.length) {
+    el.innerHTML = `<div class="hint" style="padding:12px 0">Todavía no hay insumos. Agregá cajita, bolsa, etc.</div>`;
+    return;
+  }
+  el.innerHTML = state.insumos.map(ins => `
+    <div class="checklist-item" style="margin-bottom:6px">
+      <span style="flex:1"><strong>${ins.nombre}</strong> <span class="text-muted">— ${fmt(ins.costo)}</span></span>
+      <button class="btn-icon" style="font-size:12px;padding:4px 8px" onclick="abrirModalInsumo(${ins.id})">✏️</button>
+      <button class="btn-icon" style="font-size:12px;padding:4px 8px" onclick="eliminarInsumo(${ins.id})">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderRecetaLista() {
+  const buscar = (document.getElementById('receta-buscar')?.value || '').toLowerCase();
+  const lista = PRODUCTOS_DEFAULT.filter(p => p.nombre.toLowerCase().includes(buscar));
+  const el = document.getElementById('receta-prod-lista');
+  el.innerHTML = lista.map(p => {
+    const costo = getCostoProducto(p.nombre);
+    const tieneReceta = !!state.recetas[p.nombre];
+    const activo = recetaActivaNombre === p.nombre;
+    return `
+    <div onclick="seleccionarReceta('${p.nombre}')" style="
+      padding:12px 16px; border-radius:var(--radius-sm); cursor:pointer; margin-bottom:6px;
+      background:${activo ? 'rgba(232,160,69,0.1)' : 'var(--surface2)'};
+      border:1px solid ${activo ? 'var(--accent)' : 'var(--border)'};
+      transition:all 0.15s;
+    ">
+      <div class="flex justify-between items-center">
+        <span class="font-bold" style="font-size:13px">${p.nombre}</span>
+        <span class="badge ${tieneReceta ? 'badge-ok' : 'badge-neutral'}" style="font-size:10px">${tieneReceta ? '✓ Con receta' : 'Sin receta'}</span>
+      </div>
+      <div class="hint mt-8">Costo calculado: <strong style="color:var(--accent)">${fmt(costo)}</strong></div>
+    </div>`;
+  }).join('');
+}
+
+function seleccionarReceta(nombre) {
+  recetaActivaNombre = nombre;
+  renderRecetaLista();
+
+  const rec = state.recetas[nombre] || {};
+  document.getElementById('receta-editor-empty').style.display = 'none';
+  document.getElementById('receta-editor').style.display = 'block';
+  document.getElementById('receta-prod-nombre').textContent = nombre;
+  document.getElementById('receta-costo-base').value = rec.costoBase || '';
+  document.getElementById('receta-costo-produccion').value = rec.costoProduccion || '';
+
+  // Renderizar checkboxes de insumos
+  const container = document.getElementById('receta-insumos-check');
+  const noIns = document.getElementById('receta-no-insumos');
+  if (!state.insumos.length) {
+    container.innerHTML = '';
+    noIns.style.display = 'block';
+  } else {
+    noIns.style.display = 'none';
+    const seleccionados = rec.insumos || [];
+    container.innerHTML = state.insumos.map(ins => `
+      <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border:1px solid ${seleccionados.includes(ins.id) ? 'var(--accent)' : 'var(--border)'};border-radius:var(--radius-sm);cursor:pointer;transition:all 0.15s;" id="ins-label-${ins.id}">
+        <input type="checkbox" ${seleccionados.includes(ins.id) ? 'checked' : ''} 
+          onchange="toggleInsumoReceta(${ins.id})"
+          style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0">
+        <span style="font-size:13px">${ins.nombre}</span>
+        <span class="text-muted text-xs" style="margin-left:auto">${fmt(ins.costo)}</span>
+      </label>
+    `).join('');
+  }
+  recalcReceta();
+}
+
+function toggleInsumoReceta(insId) {
+  if (!recetaActivaNombre) return;
+  if (!state.recetas[recetaActivaNombre]) state.recetas[recetaActivaNombre] = { costoBase: 0, costoProduccion: 0, insumos: [] };
+  const rec = state.recetas[recetaActivaNombre];
+  const idx = rec.insumos.indexOf(insId);
+  if (idx >= 0) rec.insumos.splice(idx, 1);
+  else rec.insumos.push(insId);
+
+  // Actualizar borde del label
+  const label = document.getElementById(`ins-label-${insId}`);
+  if (label) label.style.borderColor = rec.insumos.includes(insId) ? 'var(--accent)' : 'var(--border)';
+  recalcReceta();
+}
+
+function recalcReceta() {
+  if (!recetaActivaNombre) return;
+  const base = parseFloat(document.getElementById('receta-costo-base').value) || 0;
+  const prod = parseFloat(document.getElementById('receta-costo-produccion').value) || 0;
+  const rec = state.recetas[recetaActivaNombre] || {};
+  const insTotal = (rec.insumos || []).reduce((s, id) => {
+    const ins = state.insumos.find(i => i.id === id);
+    return s + (ins ? ins.costo : 0);
+  }, 0);
+  document.getElementById('receta-costo-total').textContent = fmt(base + prod + insTotal);
+}
+
+function guardarReceta() {
+  if (!recetaActivaNombre) return;
+  const base = parseFloat(document.getElementById('receta-costo-base').value) || 0;
+  const prod = parseFloat(document.getElementById('receta-costo-produccion').value) || 0;
+  if (!state.recetas[recetaActivaNombre]) state.recetas[recetaActivaNombre] = { insumos: [] };
+  state.recetas[recetaActivaNombre].costoBase = base;
+  state.recetas[recetaActivaNombre].costoProduccion = prod;
+  saveState();
+
+  // Actualizar costos en eventos existentes
+  state.eventos.forEach(ev => {
+    ev.productos.forEach(p => {
+      if (p.nombre === recetaActivaNombre) p.costo = getCostoProducto(p.nombre);
+    });
+  });
+  saveState();
+  renderRecetaLista();
+
+  // Feedback visual
+  const btn = document.querySelector('#receta-editor .btn-primary');
+  const orig = btn.textContent;
+  btn.textContent = '✅ Guardado';
+  btn.style.background = 'var(--accent3)';
+  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1500);
+}
+
+// INSUMOS
+function abrirModalInsumo(id) {
+  const modal = document.getElementById('modal-insumo');
+  modal.style.display = 'flex';
+  document.getElementById('insumo-edit-id').value = id || '';
+  if (id) {
+    const ins = state.insumos.find(i => i.id === id);
+    document.getElementById('modal-insumo-titulo').textContent = 'Editar Insumo';
+    document.getElementById('insumo-nombre').value = ins.nombre;
+    document.getElementById('insumo-costo').value = ins.costo;
+  } else {
+    document.getElementById('modal-insumo-titulo').textContent = 'Nuevo Insumo';
+    document.getElementById('insumo-nombre').value = '';
+    document.getElementById('insumo-costo').value = '';
+  }
+  document.getElementById('insumo-nombre').focus();
+}
+
+function cerrarModalInsumo() {
+  document.getElementById('modal-insumo').style.display = 'none';
+}
+
+function guardarInsumo() {
+  const nombre = document.getElementById('insumo-nombre').value.trim();
+  const costo = parseFloat(document.getElementById('insumo-costo').value) || 0;
+  if (!nombre) { alert('Ingresá un nombre'); return; }
+  const id = document.getElementById('insumo-edit-id').value;
+  if (id) {
+    const ins = state.insumos.find(i => i.id === parseInt(id));
+    if (ins) { ins.nombre = nombre; ins.costo = costo; }
+  } else {
+    state.insumos.push({ id: Date.now(), nombre, costo });
+  }
+  saveState();
+  cerrarModalInsumo();
+  renderInsumosLista();
+  if (recetaActivaNombre) seleccionarReceta(recetaActivaNombre);
+}
+
+function eliminarInsumo(id) {
+  if (!confirm('¿Eliminar este insumo? Se quitará de todas las recetas.')) return;
+  state.insumos = state.insumos.filter(i => i.id !== id);
+  // Limpiar de recetas
+  Object.values(state.recetas).forEach(r => {
+    r.insumos = (r.insumos || []).filter(i => i !== id);
+  });
+  saveState();
+  renderInsumosLista();
+  if (recetaActivaNombre) seleccionarReceta(recetaActivaNombre);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+
+function fmt(n) {
+  if (isNaN(n) || n === null) return '$0';
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+loadState();
+renderEventos();
+renderChecklist();
+</script>
+</body>
+</html>
