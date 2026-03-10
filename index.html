@@ -362,6 +362,7 @@
       <button class="nav-btn" onclick="showPage('planificacion')" id="nav-planificacion">📦 Planificación</button>
       <button class="nav-btn" onclick="showPage('cierre')" id="nav-cierre">✅ Cierre</button>
       <button class="nav-btn" onclick="showPage('comparativa')" id="nav-comparativa">📊 Comparativa</button>
+      <button class="nav-btn" onclick="showPage('informes')" id="nav-informes">📈 Informes</button>
       <button class="nav-btn" onclick="showPage('checklist')" id="nav-checklist">🗂️ Checklist</button>
       <div style="width:1px;background:rgba(255,255,255,0.2);margin:0 6px"></div>
       <span id="cloud-status" style="font-size:11px;font-family:'DM Sans',sans-serif;color:rgba(255,255,255,0.6);padding:0 4px;white-space:nowrap">☁️ Conectando...</span>
@@ -516,7 +517,7 @@
             <span class="text-muted text-sm">Total costos fijos:</span>
             <span class="money-big" id="cf-total">$0</span>
             <span class="text-muted text-sm ml-8">|</span>
-            <span class="text-muted text-sm">Objetivo (×<span id="cf-mult">?</span>):</span>
+            <span class="text-muted text-sm">Objetivo de ventas:</span>
             <span class="money-big" id="cf-objetivo-val" style="color:var(--accent3)">$0</span>
           </div>
         </div>
@@ -538,6 +539,7 @@
                   <th>A fabricar</th>
                   <th>% absorbe</th>
                   <th>Costo real</th>
+                  <th>% Ganancia</th>
                   <th>Precio sugerido</th>
                   <th>Precio venta</th>
                   <th>Precio c/desc.</th>
@@ -629,6 +631,22 @@
             </div>
           </div>
         </div>
+
+        <!-- Observaciones post-evento -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📝 Observaciones del Evento</div>
+              <div class="card-subtitle">Anotaciones para recordar después: qué funcionó, qué no, ideas para el próximo</div>
+            </div>
+            <button class="btn btn-sm btn-secondary" onclick="guardarObservaciones()">Guardar</button>
+          </div>
+          <textarea id="cierre-observaciones" rows="5" 
+            placeholder="Ej: Los chopps se vendieron muy rápido en la primera hora. Las tazas plásticas casi no se vendieron. El stand quedó chico. La gente preguntó mucho por vasos personalizados..."
+            style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;resize:vertical;outline:none;line-height:1.6"
+            oninput="autoGuardarObservaciones()"></textarea>
+        </div>
+
       </div>
     </div>
 
@@ -637,6 +655,13 @@
       <h2 class="section-title">Comparativa de Eventos</h2>
       <p class="section-sub">Analizá el rendimiento entre ferias</p>
       <div id="comparativa-content"></div>
+    </div>
+
+    <!-- ===== PAGE: INFORMES ===== -->
+    <div id="page-informes" class="tab-panel">
+      <h2 class="section-title">📈 Informes Históricos</h2>
+      <p class="section-sub">Historial completo de eventos y sugerencias para el próximo</p>
+      <div id="informes-content"></div>
     </div>
 
     <!-- ===== PAGE: CHECKLIST ===== -->
@@ -694,10 +719,11 @@
   </div>
 </div>
 
-<!-- MODAL NUEVO EVENTO -->
+<!-- MODAL NUEVO/EDITAR EVENTO -->
 <div id="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:center; justify-content:center;" onclick="closeModal(event)">
   <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:32px; width:500px; max-width:95vw;" onclick="event.stopPropagation()">
-    <h3 style="font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-bottom:24px;">Nuevo Evento</h3>
+    <h3 id="modal-title" style="font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-bottom:24px;">Nuevo Evento</h3>
+    <input type="hidden" id="modal-edit-id">
     <div class="form-group">
       <label>Nombre del evento</label>
       <input type="text" id="modal-nombre" placeholder="Ej: Anicon 2026">
@@ -708,19 +734,10 @@
         <input type="date" id="modal-fecha">
       </div>
       <div class="form-group">
-        <label>Objetivo (multiplicador)</label>
-        <select id="modal-objetivo">
-          <option value="1.5">×1.5 — Recuperar + 50%</option>
-          <option value="2" selected>×2 — Duplicar inversión</option>
-          <option value="2.5">×2.5 — Recuperar + 150%</option>
-          <option value="3">×3 — Triplicar inversión</option>
-          <option value="custom">Personalizado...</option>
-        </select>
+        <label>Ganancia deseada $</label>
+        <input type="number" id="modal-ganancia" placeholder="Ej: 2000000" min="0" step="1000">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Objetivo = Costos fijos + esta ganancia</div>
       </div>
-    </div>
-    <div class="form-group" id="modal-custom-obj" style="display:none">
-      <label>Multiplicador personalizado</label>
-      <input type="number" id="modal-obj-custom" placeholder="Ej: 2.2" step="0.1" min="1">
     </div>
     <div class="form-group">
       <label>Notas (opcional)</label>
@@ -728,7 +745,7 @@
     </div>
     <div class="flex gap-8 justify-between mt-24">
       <button class="btn btn-secondary" onclick="hideModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="crearEvento()">Crear Evento →</button>
+      <button class="btn btn-primary" id="modal-submit-btn" onclick="submitEvento()">Crear Evento →</button>
     </div>
   </div>
 </div>
@@ -804,12 +821,14 @@ const CHECKLIST_DEFAULT = [
   { id: 18, texto: 'DNI / credencial del evento', cat: 'personal', checked: false },
 ];
 
+const EVENTOS_HISTORICOS = [{"id":1001,"nombre":"ComicCon 2024","fecha":"2024-06-01","gananciaDeseada":0,"notas":"Importado desde Excel histórico","costosFijos":{"stand":0,"transporte":0,"comida":0,"otros":0},"cerrado":true,"historico":true,"productos":[{"nombre":"Stickers","costo":0,"cantidad":65,"fabricado":65,"precioVenta":4000,"volvieron":30},{"nombre":"Posavasos","costo":0,"cantidad":100,"fabricado":100,"precioVenta":2000,"volvieron":50},{"nombre":"Taza de ceramica","costo":0,"cantidad":324,"fabricado":324,"precioVenta":8500,"volvieron":144},{"nombre":"Taza mágica","costo":0,"cantidad":12,"fabricado":12,"precioVenta":12000,"volvieron":3},{"nombre":"Hoppy","costo":0,"cantidad":63,"fabricado":63,"precioVenta":12000,"volvieron":15},{"nombre":"Chopp","costo":0,"cantidad":84,"fabricado":84,"precioVenta":12000,"volvieron":24},{"nombre":"Straw 500 ML","costo":0,"cantidad":36,"fabricado":36,"precioVenta":27000,"volvieron":8},{"nombre":"XL 1.2","costo":0,"cantidad":32,"fabricado":32,"precioVenta":39900,"volvieron":19}]},{"id":1002,"nombre":"Anicon 2025","fecha":"2025-04-01","gananciaDeseada":0,"notas":"Importado desde Excel histórico","costosFijos":{"stand":2300000,"transporte":0,"comida":0,"otros":0},"cerrado":true,"historico":true,"productos":[{"nombre":"Posavasos","costo":900,"cantidad":250,"fabricado":250,"precioVenta":2000,"volvieron":239},{"nombre":"Taza con boca","costo":3354,"cantidad":41,"fabricado":41,"precioVenta":9000,"volvieron":22},{"nombre":"Taza de ceramica","costo":2950,"cantidad":250,"fabricado":250,"precioVenta":7500,"volvieron":170},{"nombre":"Taza mágica","costo":4494,"cantidad":72,"fabricado":72,"precioVenta":12500,"volvieron":28},{"nombre":"Chopp","costo":4750,"cantidad":120,"fabricado":120,"precioVenta":15000,"volvieron":44},{"nombre":"Latas","costo":10830,"cantidad":46,"fabricado":46,"precioVenta":22000,"volvieron":14},{"nombre":"XL 1.2","costo":21400,"cantidad":12,"fabricado":12,"precioVenta":35000,"volvieron":7},{"nombre":"Hoppy","costo":5500,"cantidad":50,"fabricado":50,"precioVenta":12500,"volvieron":36},{"nombre":"Tazones","costo":7400,"cantidad":48,"fabricado":48,"precioVenta":12000,"volvieron":28},{"nombre":"Taza 3D","costo":10060,"cantidad":31,"fabricado":31,"precioVenta":18000,"volvieron":14},{"nombre":"Vasos Pampa","costo":2370,"cantidad":72,"fabricado":72,"precioVenta":6000,"volvieron":55}]},{"id":1003,"nombre":"ComicCon Junio 2025","fecha":"2025-06-01","gananciaDeseada":0,"notas":"Importado desde Excel histórico","costosFijos":{"stand":0,"transporte":0,"comida":0,"otros":0},"cerrado":true,"historico":true,"productos":[{"nombre":"Taza de ceramica","costo":0,"cantidad":252,"fabricado":252,"precioVenta":7500,"volvieron":93},{"nombre":"XL 1.2","costo":0,"cantidad":12,"fabricado":12,"precioVenta":39900,"volvieron":5},{"nombre":"Chopp","costo":0,"cantidad":82,"fabricado":82,"precioVenta":12500,"volvieron":11},{"nombre":"Hoppy","costo":0,"cantidad":60,"fabricado":60,"precioVenta":12500,"volvieron":35},{"nombre":"Vaso que brilla en la Oscuridad","costo":0,"cantidad":13,"fabricado":13,"precioVenta":27000,"volvieron":7},{"nombre":"Latas","costo":0,"cantidad":46,"fabricado":46,"precioVenta":24000,"volvieron":15},{"nombre":"Vaso Quencher 900 ml","costo":0,"cantidad":44,"fabricado":44,"precioVenta":25000,"volvieron":8},{"nombre":"Taza con boca","costo":0,"cantidad":50,"fabricado":50,"precioVenta":12000,"volvieron":18},{"nombre":"Posavasos","costo":0,"cantidad":232,"fabricado":232,"precioVenta":2000,"volvieron":38},{"nombre":"Vaos con Glitter de 750 para UV","costo":0,"cantidad":134,"fabricado":134,"precioVenta":6000,"volvieron":104},{"nombre":"Vaso Tipo Jarro Sublimable de Colores","costo":0,"cantidad":96,"fabricado":96,"precioVenta":6000,"volvieron":63},{"nombre":"Taza mágica","costo":0,"cantidad":50,"fabricado":50,"precioVenta":15000,"volvieron":4},{"nombre":"Termos 500 ml","costo":0,"cantidad":18,"fabricado":18,"precioVenta":27000,"volvieron":14}]},{"id":1004,"nombre":"ComicCon Diciembre 2025","fecha":"2025-12-01","gananciaDeseada":0,"notas":"Importado desde Excel histórico","costosFijos":{"stand":2210000,"transporte":100000,"comida":75000,"otros":100000},"cerrado":true,"historico":true,"productos":[{"nombre":"Taza de ceramica","costo":3050,"cantidad":252,"fabricado":252,"precioVenta":8000,"volvieron":127},{"nombre":"Taza mágica","costo":4890,"cantidad":72,"fabricado":72,"precioVenta":12500,"volvieron":7},{"nombre":"Posavasos","costo":900,"cantidad":100,"fabricado":100,"precioVenta":2000,"volvieron":45},{"nombre":"Chopp","costo":8000,"cantidad":192,"fabricado":192,"precioVenta":15000,"volvieron":104},{"nombre":"Latas","costo":12350,"cantidad":60,"fabricado":60,"precioVenta":25000,"volvieron":26},{"nombre":"Hoppy","costo":6200,"cantidad":40,"fabricado":40,"precioVenta":14000,"volvieron":25},{"nombre":"Taza 3D","costo":9000,"cantidad":54,"fabricado":54,"precioVenta":18000,"volvieron":23},{"nombre":"Tazones","costo":8100,"cantidad":72,"fabricado":72,"precioVenta":14000,"volvieron":44},{"nombre":"Torre","costo":12650,"cantidad":26,"fabricado":26,"precioVenta":30000,"volvieron":6},{"nombre":"BOX","costo":25000,"cantidad":12,"fabricado":12,"precioVenta":45000,"volvieron":5},{"nombre":"Taza plástica","costo":1800,"cantidad":36,"fabricado":36,"precioVenta":5000,"volvieron":33},{"nombre":"Vaso de vidrio Grabado + Posavaso","costo":3180,"cantidad":63,"fabricado":63,"precioVenta":7000,"volvieron":54},{"nombre":"Taza con boca","costo":3554,"cantidad":72,"fabricado":72,"precioVenta":9000,"volvieron":14},{"nombre":"Termos 500 ml","costo":18000,"cantidad":21,"fabricado":21,"precioVenta":25000,"volvieron":18}]}];
+
 let state = {
   eventos: [],
   activeEventId: null,
   checklist: [...CHECKLIST_DEFAULT],
-  insumos: [],       // { id, nombre, costo }
-  recetas: {},       // { [nombreProducto]: { costoBase, costoProduccion, insumos: [id,...] } }
+  insumos: [],
+  recetas: {},
 };
 
 let _isSyncingFromRemote = false;
@@ -889,6 +908,8 @@ function showPage(page) {
   if (page === 'cierre') renderCierre();
   if (page === 'comparativa') renderComparativa();
   if (page === 'checklist') renderChecklist();
+  if (page === 'informes') renderInformes();
+  if (page === 'cierre') { renderCierre(); cargarObservaciones(); }
   if (page === 'recetario') renderRecetario();
 }
 
@@ -914,41 +935,72 @@ function getCostoProducto(nombre) {
 // ============================================================
 
 function openNewEventModal() {
+  document.getElementById('modal-title').textContent = 'Nuevo Evento';
+  document.getElementById('modal-submit-btn').textContent = 'Crear Evento →';
+  document.getElementById('modal-edit-id').value = '';
   document.getElementById('modal-overlay').style.display = 'flex';
   document.getElementById('modal-nombre').focus();
+}
+
+function editEvent(id) {
+  const ev = state.eventos.find(e => e.id === id);
+  if (!ev) return;
+  document.getElementById('modal-title').textContent = 'Editar Evento';
+  document.getElementById('modal-submit-btn').textContent = 'Guardar cambios →';
+  document.getElementById('modal-edit-id').value = id;
+  document.getElementById('modal-nombre').value = ev.nombre;
+  document.getElementById('modal-fecha').value = ev.fecha || '';
+  document.getElementById('modal-ganancia').value = ev.gananciaDeseada || '';
+  document.getElementById('modal-notas').value = ev.notas || '';
+  document.getElementById('modal-overlay').style.display = 'flex';
 }
 
 function hideModal() {
   document.getElementById('modal-overlay').style.display = 'none';
   document.getElementById('modal-nombre').value = '';
   document.getElementById('modal-fecha').value = '';
-  document.getElementById('modal-objetivo').value = '2';
+  document.getElementById('modal-ganancia').value = '';
   document.getElementById('modal-notas').value = '';
-  document.getElementById('modal-custom-obj').style.display = 'none';
+  document.getElementById('modal-edit-id').value = '';
 }
 
 function closeModal(e) {
   if (e.target.id === 'modal-overlay') hideModal();
 }
 
-document.getElementById('modal-objetivo').addEventListener('change', function() {
-  document.getElementById('modal-custom-obj').style.display = this.value === 'custom' ? 'block' : 'none';
-});
+function submitEvento() {
+  const editId = document.getElementById('modal-edit-id').value;
+  if (editId) {
+    guardarEdicionEvento(parseInt(editId));
+  } else {
+    crearEvento();
+  }
+}
 
+function guardarEdicionEvento(id) {
+  const ev = state.eventos.find(e => e.id === id);
+  if (!ev) return;
+  const nombre = document.getElementById('modal-nombre').value.trim();
+  if (!nombre) { alert('Ingresá un nombre para el evento'); return; }
+  ev.nombre = nombre;
+  ev.fecha = document.getElementById('modal-fecha').value;
+  ev.gananciaDeseada = parseFloat(document.getElementById('modal-ganancia').value) || 0;
+  ev.notas = document.getElementById('modal-notas').value.trim();
+  saveState();
+  hideModal();
+  renderEventos();
+  if (state.activeEventId === id) renderPlanificacion();
+}
 function crearEvento() {
   const nombre = document.getElementById('modal-nombre').value.trim();
   if (!nombre) { alert('Ingresá un nombre para el evento'); return; }
   const fecha = document.getElementById('modal-fecha').value;
-  let objetivo = parseFloat(document.getElementById('modal-objetivo').value);
-  if (isNaN(objetivo)) {
-    objetivo = parseFloat(document.getElementById('modal-obj-custom').value);
-    if (isNaN(objetivo) || objetivo < 1) { alert('Ingresá un multiplicador válido'); return; }
-  }
+  const gananciaDeseada = parseFloat(document.getElementById('modal-ganancia').value) || 0;
   const notas = document.getElementById('modal-notas').value.trim();
 
   const evento = {
     id: Date.now(),
-    nombre, fecha, objetivo, notas,
+    nombre, fecha, gananciaDeseada, notas,
     costosFijos: { stand: 0, transporte: 0, comida: 0, otros: 0 },
     productos: PRODUCTOS_DEFAULT.filter(p =>
       ['Posavasos','Taza de ceramica','Taza mágica','Taza con boca','Chopp','Hoppy','Latas','XL 1.2','Tazones','Botella'].includes(p.nombre)
@@ -987,7 +1039,9 @@ function renderEventos() {
     const totalCostosFijos = sumCF(ev);
     const totalInventario = ev.productos.reduce((s, p) => s + p.costo * p.cantidad, 0);
     const totalInversion = totalCostosFijos + totalInventario;
-    const objetivo = totalInversion * ev.objetivo;
+    // Compatibilidad con eventos viejos que usaban multiplicador
+    const gananciaDeseada = ev.gananciaDeseada != null ? ev.gananciaDeseada : (ev.objetivo ? totalCostosFijos * (ev.objetivo - 1) : 0);
+    const objetivo = totalCostosFijos + gananciaDeseada;
     const isActive = ev.id === state.activeEventId;
 
     // Calcular si tiene cierre
@@ -1007,8 +1061,8 @@ function renderEventos() {
         ${isActive ? '<span class="badge badge-accent">Activo</span>' : ''}
       </div>
       <div class="event-meta mb-16">
-        ${ev.fecha ? '📅 ' + formatDate(ev.fecha) : 'Sin fecha'} &nbsp;·&nbsp; 
-        Objetivo ×${ev.objetivo}
+        ${ev.fecha ? '📅 ' + formatDate(ev.fecha) : 'Sin fecha'} &nbsp;·&nbsp;
+        Objetivo: ${fmt(objetivo)}
       </div>
       <div class="divider" style="margin:12px 0"></div>
       <div class="grid-2">
@@ -1017,8 +1071,8 @@ function renderEventos() {
           <div class="money" style="color:var(--text)">${fmt(totalInversion)}</div>
         </div>
         <div>
-          <div class="text-xs text-muted">A vender</div>
-          <div class="money" style="color:var(--accent3)">${fmt(objetivo)}</div>
+          <div class="text-xs text-muted">Ganar</div>
+          <div class="money" style="color:var(--accent3)">${fmt(gananciaDeseada)}</div>
         </div>
       </div>
       ${tieneCierre ? `
@@ -1029,6 +1083,7 @@ function renderEventos() {
       <div class="flex gap-8 mt-16">
         <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); selectEvent(${ev.id}); showPage('planificacion')">Planificar</button>
         <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); selectEvent(${ev.id}); showPage('cierre')">Cierre</button>
+        <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); editEvent(${ev.id})" title="Editar evento">✏️</button>
         <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteEvent(${ev.id})" style="margin-left:auto">🗑</button>
       </div>
     </div>`;
@@ -1065,8 +1120,7 @@ function renderPlanificacion() {
 
   document.getElementById('plan-event-name').textContent = ev.nombre;
   document.getElementById('plan-event-date').textContent = ev.fecha ? formatDate(ev.fecha) : 'Sin fecha';
-  document.getElementById('cf-mult').textContent = ev.objetivo;
-  document.getElementById('plan-objetivo-badge').textContent = `Objetivo ×${ev.objetivo}`;
+  document.getElementById('plan-objetivo-badge').textContent = `Meta: ${fmt(ev.gananciaDeseada || 0)}`;
 
   // Costos fijos
   document.getElementById('cf-stand').value = ev.costosFijos.stand || '';
@@ -1114,6 +1168,11 @@ function renderProductosTable() {
       <td id="afab-${i}" class="font-bold"></td>
       <td id="pct-${i}" class="text-muted text-sm"></td>
       <td id="creal-${i}" class="money"></td>
+      <td>
+        <input type="number" min="0" max="999" value="${p.margenGanancia != null ? p.margenGanancia : ''}" placeholder="%" 
+          onchange="updateProducto(${i}, 'margenGanancia', this.value)"
+          style="width:60px;background:var(--surface2);border:1px solid var(--border);color:var(--accent3);padding:6px 8px;border-radius:var(--radius-sm);font-size:13px;outline:none;text-align:center">
+      </td>
       <td id="psug-${i}" class="money" style="color:var(--accent3)"></td>
       <td><input type="number" min="0" value="${p.precioVenta || ''}" placeholder="0" onchange="updateProducto(${i}, 'precioVenta', this.value)" id="pventa-${i}"></td>
       <td id="pdesc-${i}" class="money text-muted"></td>
@@ -1171,7 +1230,10 @@ function recalcAll() {
   const totalCF = sumCF(ev);
   const totalInventarioCosto = ev.productos.reduce((s, p) => s + p.costo * (p.cantidad || 0), 0);
   const totalInversion = totalCF + totalInventarioCosto;
-  const objetivo = totalInversion * ev.objetivo;
+
+  // Compatibilidad con eventos viejos
+  const gananciaDeseada = ev.gananciaDeseada != null ? ev.gananciaDeseada : (ev.objetivo ? totalCF * (ev.objetivo - 1) : 0);
+  const objetivo = totalCF + gananciaDeseada;
 
   document.getElementById('cf-total').textContent = fmt(totalCF);
   document.getElementById('cf-objetivo-val').textContent = fmt(objetivo);
@@ -1183,8 +1245,10 @@ function recalcAll() {
     const pct = totalInventarioCosto > 0 ? productoCostoTotal / totalInventarioCosto : 0;
     const costoFijoAbsorbido = pct * totalCF;
     const costoFijoPorUnidad = cant > 0 ? costoFijoAbsorbido / cant : 0;
-    const costoReal = p.costo + costoFijoPorUnidad;
-    const precioSugerido = costoReal * ev.objetivo;
+    const costoReal = p.costo + costoFijoPorUnidad; // costo de producción + su parte de CF
+    // Precio sugerido = costoReal + margen de ganancia configurado
+    const margen = p.margenGanancia != null ? p.margenGanancia : 0;
+    const precioSugerido = margen > 0 ? costoReal * (1 + margen / 100) : costoReal;
     const precioDesc = (p.precioVenta || 0) * 0.9;
     const gananciaUnit = (p.precioVenta || 0) - costoReal;
     const aFabricar = Math.max(0, cant - (p.fabricado || 0));
@@ -1193,7 +1257,7 @@ function recalcAll() {
     let estado = '';
     if (p.precioVenta > 0 && p.precioVenta < costoReal) {
       estado = '<span class="badge badge-danger">⚠ Pérdida</span>';
-    } else if (p.precioVenta > 0 && p.precioVenta >= precioSugerido) {
+    } else if (p.precioVenta > 0 && gananciaUnit >= 0) {
       estado = '<span class="badge badge-ok">✓ Ok</span>';
     } else if (p.precioVenta > 0) {
       estado = '<span class="badge badge-warn">~ Justo</span>';
@@ -1218,7 +1282,7 @@ function recalcAll() {
   const totalPrecioVenta = ev.productos.reduce((s, p) => s + (p.precioVenta || 0) * (p.cantidad || 0), 0);
   const totalAFabricar = ev.productos.reduce((s, p) => s + Math.max(0, (p.cantidad || 0) - (p.fabricado || 0)), 0);
   const productosConPrecio = ev.productos.filter(p => p.precioVenta > 0 && p.cantidad > 0).length;
-  const productosEnPerdida = ev.productos.filter((p, i) => {
+  const productosEnPerdida = ev.productos.filter((p) => {
     const cant = p.cantidad || 0;
     if (!cant || !p.precioVenta) return false;
     const productoCostoTotal = p.costo * cant;
@@ -1229,6 +1293,9 @@ function recalcAll() {
     return p.precioVenta < costoReal;
   }).length;
 
+  // Ganancia potencial si vendés todo
+  const gananciaPotencial = totalPrecioVenta - totalCF - totalInventarioCosto;
+
   document.getElementById('plan-stats').innerHTML = `
     <div class="stat-box">
       <div class="stat-label">Inversión Total</div>
@@ -1236,14 +1303,14 @@ function recalcAll() {
       <div class="stat-sub">CF: ${fmt(totalCF)} + Mercadería: ${fmt(totalInventarioCosto)}</div>
     </div>
     <div class="stat-box">
-      <div class="stat-label">Objetivo (×${ev.objetivo})</div>
-      <div class="stat-value" style="color:var(--accent3)">${fmt(objetivo)}</div>
-      <div class="stat-sub">Hay que llegar acá para cumplir el objetivo</div>
+      <div class="stat-label">Objetivo de ganancia</div>
+      <div class="stat-value" style="color:var(--accent3)">${fmt(gananciaDeseada)}</div>
+      <div class="stat-sub">CF ${fmt(totalCF)} + ganancia ${fmt(gananciaDeseada)} = vender ${fmt(objetivo)}</div>
     </div>
     <div class="stat-box">
       <div class="stat-label">Si vendés todo</div>
-      <div class="stat-value" style="color:${totalPrecioVenta >= objetivo ? 'var(--accent3)' : 'var(--danger)'}">${fmt(totalPrecioVenta)}</div>
-      <div class="stat-sub">${totalPrecioVenta >= objetivo ? '✓ Alcanza el objetivo' : '✗ No alcanza el objetivo'}</div>
+      <div class="stat-value" style="color:${gananciaPotencial >= gananciaDeseada ? 'var(--accent3)' : 'var(--danger)'}">${fmt(totalPrecioVenta)}</div>
+      <div class="stat-sub">${gananciaPotencial >= gananciaDeseada ? '✓ Ganás ' + fmt(gananciaPotencial) : '✗ Ganás solo ' + fmt(gananciaPotencial)}</div>
     </div>
     <div class="stat-box">
       <div class="stat-label">A fabricar todavía</div>
@@ -1255,16 +1322,16 @@ function recalcAll() {
   // Alertas
   const alerts = [];
   if (productosEnPerdida > 0) {
-    alerts.push(`<div class="alert alert-danger">⚠️ <strong>${productosEnPerdida} producto(s)</strong> tienen precio de venta por debajo del costo real. Revisá los marcados en rojo.</div>`);
+    alerts.push(`<div class="alert alert-danger">⚠️ <strong>${productosEnPerdida} producto(s)</strong> tienen precio de venta por debajo del costo real.</div>`);
   }
   if (totalAFabricar > 0) {
     alerts.push(`<div class="alert alert-warn">🔨 Tenés <strong>${totalAFabricar} unidades</strong> por fabricar antes del evento.</div>`);
   }
-  if (totalPrecioVenta > 0 && totalPrecioVenta < objetivo) {
-    alerts.push(`<div class="alert alert-danger">🎯 Incluso vendiendo todo, <strong>no alcanzás el objetivo</strong>. Necesitás ${fmt(objetivo - totalPrecioVenta)} más.</div>`);
+  if (totalPrecioVenta > 0 && gananciaPotencial < gananciaDeseada) {
+    alerts.push(`<div class="alert alert-danger">🎯 Incluso vendiendo todo, la ganancia (${fmt(gananciaPotencial)}) no alcanza tu objetivo de ${fmt(gananciaDeseada)}.</div>`);
   }
-  if (totalPrecioVenta >= objetivo && productosConPrecio > 0) {
-    alerts.push(`<div class="alert alert-ok">✅ Con todos los precios cargados, el stock alcanza para cumplir el objetivo vendiendo todo.</div>`);
+  if (gananciaPotencial >= gananciaDeseada && productosConPrecio > 0) {
+    alerts.push(`<div class="alert alert-ok">✅ Si vendés todo, superás tu objetivo de ganancia.</div>`);
   }
   document.getElementById('plan-alerts').innerHTML = alerts.join('');
 
@@ -1279,32 +1346,42 @@ function updateSimulator() {
 
   const totalCF = sumCF(ev);
   const totalInventarioCosto = ev.productos.reduce((s, p) => s + p.costo * (p.cantidad || 0), 0);
-  const totalInversion = totalCF + totalInventarioCosto;
-  const objetivo = totalInversion * ev.objetivo;
+  const gananciaDeseada = ev.gananciaDeseada != null ? ev.gananciaDeseada : (ev.objetivo ? totalCF * (ev.objetivo - 1) : 0);
+  const objetivo = totalCF + gananciaDeseada;
 
+  // Ingresos si vendés el pct%
   const ingresoSimulado = ev.productos.reduce((s, p) => {
     return s + (p.precioVenta || 0) * (p.cantidad || 0) * (pct / 100);
   }, 0);
 
-  const alcanza = ingresoSimulado >= objetivo;
-  const diff = Math.abs(ingresoSimulado - objetivo);
+  // Costo de lo vendido (mercadería vendida proporcional)
+  const costoMercVendida = totalInventarioCosto * (pct / 100);
+  // Costos fijos son fijos, siempre se pagan
+  const costoTotal = totalCF + costoMercVendida;
+  const gananciaSimulada = ingresoSimulado - costoTotal;
+  const alcanza = gananciaSimulada >= gananciaDeseada;
 
   document.getElementById('sim-result').className = 'sim-result ' + (alcanza ? 'alcanza' : 'no-alcanza');
   document.getElementById('sim-result').innerHTML = `
     <div style="font-family:'Syne',sans-serif; font-size:28px; font-weight:800; color:${alcanza ? 'var(--accent3)' : 'var(--danger)'}; margin-bottom:8px">
       ${fmt(ingresoSimulado)}
     </div>
-    <div style="font-size:14px; color:var(--text2); margin-bottom:16px">
-      Ingreso estimado vendiendo el ${pct}% del stock
+    <div style="font-size:14px; color:var(--text2); margin-bottom:4px">
+      Ingresos vendiendo el ${pct}% del stock
+    </div>
+    <div style="font-size:13px; color:var(--text3); margin-bottom:16px">
+      Costo real: ${fmt(costoTotal)} (CF ${fmt(totalCF)} + mercadería ${fmt(costoMercVendida)})
     </div>
     <div style="font-size:15px; color:${alcanza ? 'var(--accent3)' : 'var(--danger)'}; font-weight:600">
-      ${alcanza ? `✅ Alcanzás el objetivo. Te sobran ${fmt(diff)}` : `❌ No alcanzás el objetivo. Te faltan ${fmt(diff)}`}
+      ${alcanza
+        ? `✅ Ganás ${fmt(gananciaSimulada)} — superás el objetivo`
+        : `❌ Ganás ${fmt(gananciaSimulada)} — te faltan ${fmt(gananciaDeseada - gananciaSimulada)} para tu objetivo`}
     </div>
     <div style="margin-top:16px">
       <div class="progress-bar">
-        <div class="progress-fill ${alcanza ? 'ok' : 'danger'}" style="width:${Math.min(100, (ingresoSimulado/objetivo)*100).toFixed(1)}%"></div>
+        <div class="progress-fill ${alcanza ? 'ok' : 'danger'}" style="width:${Math.min(100, gananciaDeseada > 0 ? (gananciaSimulada/gananciaDeseada)*100 : 0).toFixed(1)}%"></div>
       </div>
-      <div class="text-xs text-muted mt-8">${((ingresoSimulado/objetivo)*100).toFixed(1)}% del objetivo</div>
+      <div class="text-xs text-muted mt-8">${gananciaDeseada > 0 ? ((gananciaSimulada/gananciaDeseada)*100).toFixed(1) : 0}% de la ganancia objetivo</div>
     </div>
   `;
 }
@@ -1334,16 +1411,11 @@ function renderCierre() {
 
   tbody.innerHTML = ev.productos.filter(p => p.cantidad > 0).map((p, i) => {
     const cant = p.cantidad || 0;
-    const productoCostoTotal = p.costo * cant;
-    const pct = totalInventarioCosto > 0 ? productoCostoTotal / totalInventarioCosto : 0;
-    const costoFijoAbsorbido = pct * totalCF;
-    const costoFijoPorUnidad = cant > 0 ? costoFijoAbsorbido / cant : 0;
-    const costoReal = p.costo + costoFijoPorUnidad;
     const volvieron = p.volvieron || 0;
     const vendido = cant - volvieron;
     const ingreso = vendido * (p.precioVenta || 0);
-    const costoTotalVendido = vendido * costoReal;
-    const ganancia = ingreso - costoTotalVendido;
+    const costoVendido = vendido * p.costo; // solo costo de producción
+    const ganancia = ingreso - costoVendido; // sin CF (los CF se descuentan al total)
 
     return `
     <tr>
@@ -1354,7 +1426,7 @@ function renderCierre() {
       <td class="font-bold" style="color:${vendido > 0 ? 'var(--accent)' : 'var(--text3)'}">${vendido}</td>
       <td class="money">${fmt(p.precioVenta || 0)}</td>
       <td class="money text-accent">${fmt(ingreso)}</td>
-      <td class="money text-muted">${fmt(costoTotalVendido)}</td>
+      <td class="money text-muted">${fmt(costoVendido)}</td>
       <td class="money" style="color:${ganancia >= 0 ? 'var(--accent3)' : 'var(--danger)'}">${fmt(ganancia)}</td>
     </tr>`;
   }).join('');
@@ -1378,34 +1450,29 @@ function updateCierreTotals() {
 
   const totalCF = sumCF(ev);
   const totalInventarioCosto = ev.productos.reduce((s, p) => s + p.costo * (p.cantidad || 0), 0);
-  const totalInversion = totalCF + totalInventarioCosto;
-  const objetivo = totalInversion * ev.objetivo;
+  const gananciaDeseada = ev.gananciaDeseada != null ? ev.gananciaDeseada : (ev.objetivo ? totalCF * (ev.objetivo - 1) : 0);
 
-  let totalIngresos = 0, totalCostosR = 0, totalGanancia = 0, totalVendido = 0;
+  let totalIngresos = 0, totalCostoMercVendida = 0, totalVendido = 0;
 
   ev.productos.filter(p => p.cantidad > 0).forEach(p => {
     const cant = p.cantidad || 0;
-    const productoCostoTotal = p.costo * cant;
-    const pct = totalInventarioCosto > 0 ? productoCostoTotal / totalInventarioCosto : 0;
-    const costoFijoAbsorbido = pct * totalCF;
-    const costoFijoPorUnidad = cant > 0 ? costoFijoAbsorbido / cant : 0;
-    const costoReal = p.costo + costoFijoPorUnidad;
     const volvieron = p.volvieron || 0;
     const vendido = cant - volvieron;
     totalIngresos += vendido * (p.precioVenta || 0);
-    totalCostosR += vendido * costoReal;
+    totalCostoMercVendida += vendido * p.costo; // solo costo de producción de lo vendido
     totalVendido += vendido;
   });
 
-  totalGanancia = totalIngresos - totalCostosR;
+  // Ganancia real = ingresos − costos fijos − costo mercadería vendida
+  const costoRealEvento = totalCF + totalCostoMercVendida;
+  const totalGanancia = totalIngresos - costoRealEvento;
+  const alcanza = totalGanancia >= gananciaDeseada;
+  const progPct = gananciaDeseada > 0 ? Math.min(100, (totalGanancia / gananciaDeseada) * 100) : (totalGanancia >= 0 ? 100 : 0);
 
   document.getElementById('cierre-total-ingresos').textContent = fmt(totalIngresos);
-  document.getElementById('cierre-total-costos').textContent = fmt(totalCostosR);
+  document.getElementById('cierre-total-costos').textContent = fmt(costoRealEvento);
   document.getElementById('cierre-total-ganancia').textContent = fmt(totalGanancia);
   document.getElementById('cierre-total-ganancia').style.color = totalGanancia >= 0 ? 'var(--accent3)' : 'var(--danger)';
-
-  const alcanza = totalIngresos >= objetivo;
-  const progPct = objetivo > 0 ? Math.min(100, (totalIngresos / objetivo) * 100) : 0;
 
   document.getElementById('cierre-stats').innerHTML = `
     <div class="stat-box">
@@ -1415,20 +1482,22 @@ function updateCierreTotals() {
     <div class="stat-box">
       <div class="stat-label">Ingresos Reales</div>
       <div class="stat-value">${fmt(totalIngresos)}</div>
+      <div class="stat-sub">CF pagados: ${fmt(totalCF)}</div>
     </div>
     <div class="stat-box">
       <div class="stat-label">Ganancia Neta</div>
       <div class="stat-value" style="color:${totalGanancia >= 0 ? 'var(--accent3)' : 'var(--danger)'}">${fmt(totalGanancia)}</div>
+      <div class="stat-sub">Ingresos − CF − costo vendido</div>
     </div>
     <div class="stat-box">
-      <div class="stat-label">Objetivo (×${ev.objetivo})</div>
+      <div class="stat-label">Objetivo de ganancia</div>
       <div class="stat-value" style="color:${alcanza ? 'var(--accent3)' : 'var(--danger)'}">${alcanza ? '✅ Logrado' : '❌ No logrado'}</div>
-      <div class="stat-sub">${fmt(objetivo)}</div>
+      <div class="stat-sub">Meta: ${fmt(gananciaDeseada)}</div>
     </div>
   `;
 
   document.getElementById('cierre-resultado').style.display = 'block';
-  document.getElementById('cierre-prog-label').textContent = progPct.toFixed(1) + '% del objetivo';
+  document.getElementById('cierre-prog-label').textContent = progPct.toFixed(1) + '% de la ganancia objetivo';
   document.getElementById('cierre-prog-label').style.color = alcanza ? 'var(--accent3)' : 'var(--danger)';
   const fill = document.getElementById('cierre-prog-fill');
   fill.style.width = progPct + '%';
@@ -1458,27 +1527,23 @@ function renderComparativa() {
     const totalCF = sumCF(ev);
     const totalInventarioCosto = ev.productos.reduce((s, p) => s + p.costo * (p.cantidad || 0), 0);
     const totalInversion = totalCF + totalInventarioCosto;
-    const objetivo = totalInversion * ev.objetivo;
+    const gananciaDeseada = ev.gananciaDeseada != null ? ev.gananciaDeseada : (ev.objetivo ? totalCF * (ev.objetivo - 1) : 0);
+    const objetivo = gananciaDeseada; // lo que quiere ganar
+
     const totalIngresos = ev.productos.reduce((s, p) => {
       const vendido = (p.cantidad || 0) - (p.volvieron || 0);
       return s + vendido * (p.precioVenta || 0);
     }, 0);
-    const totalCostosR = ev.productos.reduce((s, p) => {
-      const cant = p.cantidad || 0;
-      const productoCostoTotal = p.costo * cant;
-      const pct = totalInventarioCosto > 0 ? productoCostoTotal / totalInventarioCosto : 0;
-      const costoFijoAbsorbido = pct * totalCF;
-      const costoFijoPorUnidad = cant > 0 ? costoFijoAbsorbido / cant : 0;
-      const costoReal = p.costo + costoFijoPorUnidad;
-      const vendido = cant - (p.volvieron || 0);
-      return s + vendido * costoReal;
+    const costoMercVendida = ev.productos.reduce((s, p) => {
+      const vendido = (p.cantidad || 0) - (p.volvieron || 0);
+      return s + vendido * p.costo;
     }, 0);
-    const ganancia = totalIngresos - totalCostosR;
+    const ganancia = totalIngresos - totalCF - costoMercVendida;
     const roi = totalInversion > 0 ? (ganancia / totalInversion) * 100 : 0;
-    const alcanza = totalIngresos >= objetivo;
-    const progPct = objetivo > 0 ? Math.min(100, (totalIngresos / objetivo) * 100) : 0;
+    const alcanza = ganancia >= gananciaDeseada;
+    const progPct = gananciaDeseada > 0 ? Math.min(100, (ganancia / gananciaDeseada) * 100) : (ganancia >= 0 ? 100 : 0);
 
-    return { ev, totalInversion, objetivo, totalIngresos, ganancia, roi, alcanza, progPct };
+    return { ev, totalInversion, gananciaDeseada, objetivo, totalIngresos, ganancia, roi, alcanza, progPct };
   });
 
   container.innerHTML = `
@@ -1490,7 +1555,7 @@ function renderComparativa() {
               <th>Evento</th>
               <th>Fecha</th>
               <th>Inversión</th>
-              <th>Objetivo</th>
+              <th>Meta ganancia</th>
               <th>Ingresos reales</th>
               <th>Ganancia</th>
               <th>ROI</th>
@@ -1504,7 +1569,7 @@ function renderComparativa() {
               <td class="font-bold">${r.ev.nombre}</td>
               <td class="text-muted">${r.ev.fecha ? formatDate(r.ev.fecha) : '—'}</td>
               <td class="money">${fmt(r.totalInversion)}</td>
-              <td class="money">${fmt(r.objetivo)}</td>
+              <td class="money">${fmt(r.gananciaDeseada || 0)}</td>
               <td class="money text-accent">${fmt(r.totalIngresos)}</td>
               <td class="money" style="color:${r.ganancia >= 0 ? 'var(--accent3)' : 'var(--danger)'}">${fmt(r.ganancia)}</td>
               <td style="color:${r.roi >= 0 ? 'var(--accent3)' : 'var(--danger)'}">${r.roi.toFixed(1)}%</td>
@@ -1529,19 +1594,13 @@ function renderComparativa() {
 function renderProductosComparativa(eventos) {
   const productMap = {};
   eventos.forEach(ev => {
-    const totalCF = sumCF(ev);
-    const totalInventarioCosto = ev.productos.reduce((s, p) => s + p.costo * (p.cantidad || 0), 0);
     ev.productos.forEach(p => {
       const cant = p.cantidad || 0;
       if (!cant) return;
-      const productoCostoTotal = p.costo * cant;
-      const pct = totalInventarioCosto > 0 ? productoCostoTotal / totalInventarioCosto : 0;
-      const costoFijoAbsorbido = pct * totalCF;
-      const costoFijoPorUnidad = cant > 0 ? costoFijoAbsorbido / cant : 0;
-      const costoReal = p.costo + costoFijoPorUnidad;
       const vendido = cant - (p.volvieron || 0);
       const ingreso = vendido * (p.precioVenta || 0);
-      const ganancia = ingreso - vendido * costoReal;
+      const costoVendido = vendido * p.costo;
+      const ganancia = ingreso - costoVendido; // sin CF (se mide a nivel evento)
 
       if (!productMap[p.nombre]) productMap[p.nombre] = { ingreso: 0, ganancia: 0, vendido: 0 };
       productMap[p.nombre].ingreso += ingreso;
@@ -1863,8 +1922,182 @@ function importarDatos(event) {
 }
 
 // ============================================================
-// UTILS
+// OBSERVACIONES
 // ============================================================
+
+function cargarObservaciones() {
+  const ev = getActiveEvent();
+  if (!ev) return;
+  document.getElementById('cierre-observaciones').value = ev.observaciones || '';
+}
+
+let _obsTimer = null;
+function autoGuardarObservaciones() {
+  clearTimeout(_obsTimer);
+  _obsTimer = setTimeout(guardarObservaciones, 1500);
+}
+
+function guardarObservaciones() {
+  const ev = getActiveEvent();
+  if (!ev) return;
+  ev.observaciones = document.getElementById('cierre-observaciones').value;
+  saveState();
+}
+
+// ============================================================
+// INFORMES HISTÓRICOS + SUGERENCIAS
+// ============================================================
+
+function todosLosEventos() {
+  // Combina históricos hardcodeados + eventos del usuario, sin duplicados por id
+  const ids = new Set(state.eventos.map(e => e.id));
+  const historicos = EVENTOS_HISTORICOS.filter(e => !ids.has(e.id));
+  return [...historicos, ...state.eventos].sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+}
+
+function renderInformes() {
+  const container = document.getElementById('informes-content');
+  const todos = todosLosEventos();
+  const cerrados = todos.filter(ev => ev.cerrado || ev.historico);
+
+  // Construir mapa por producto acumulado
+  const productMap = {};
+  cerrados.forEach(ev => {
+    ev.productos.forEach(p => {
+      const cant = p.cantidad || 0;
+      if (!cant) return;
+      const vendido = cant - (p.volvieron || 0);
+      const pctVenta = cant > 0 ? vendido / cant : 0;
+      const ingreso = vendido * (p.precioVenta || 0);
+
+      if (!productMap[p.nombre]) {
+        productMap[p.nombre] = { apariciones: 0, totalLlevado: 0, totalVendido: 0, totalIngreso: 0, precios: [], pctVentas: [], eventos: [] };
+      }
+      const pm = productMap[p.nombre];
+      pm.apariciones++;
+      pm.totalLlevado += cant;
+      pm.totalVendido += vendido;
+      pm.totalIngreso += ingreso;
+      pm.precios.push(p.precioVenta || 0);
+      pm.pctVentas.push(pctVenta);
+      pm.eventos.push({ nombre: ev.nombre, fecha: ev.fecha, cantidad: cant, vendido, pctVenta, precioVenta: p.precioVenta || 0 });
+    });
+  });
+
+  // Ordenar por total vendido desc
+  const sorted = Object.entries(productMap).sort((a, b) => b[1].totalVendido - a[1].totalVendido);
+
+  // Sugerencias para el próximo evento
+  const sugerencias = sorted.map(([nombre, d]) => {
+    const pctPromedio = d.pctVentas.reduce((s, v) => s + v, 0) / d.pctVentas.length;
+    const precioPromedio = d.precios.filter(p => p > 0).reduce((s, v) => s + v, 0) / (d.precios.filter(p => p > 0).length || 1);
+    const precioMax = Math.max(...d.precios.filter(p => p > 0));
+    const cantPromedio = Math.round(d.totalLlevado / d.apariciones);
+    const cantSugerida = Math.round(cantPromedio * Math.min(pctPromedio + 0.1, 1)); // llevar un poco más de lo que se vende
+
+    let nivel = '';
+    let color = '';
+    if (pctPromedio >= 0.7) { nivel = '🔥 Alta demanda'; color = 'var(--accent3)'; }
+    else if (pctPromedio >= 0.4) { nivel = '✅ Demanda media'; color = 'var(--warn)'; }
+    else { nivel = '⚠️ Baja demanda'; color = 'var(--danger)'; }
+
+    return { nombre, pctPromedio, precioPromedio, precioMax, cantPromedio, cantSugerida, nivel, color, apariciones: d.apariciones, totalVendido: d.totalVendido, totalIngreso: d.totalIngreso };
+  });
+
+  container.innerHTML = `
+    <!-- SUGERENCIAS -->
+    <div class="card mb-16">
+      <div class="card-header">
+        <div>
+          <div class="card-title">💡 Sugerencias para el próximo evento</div>
+          <div class="card-subtitle">Basadas en ${cerrados.length} eventos históricos</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Eventos</th>
+              <th>% Venta prom.</th>
+              <th>Demanda</th>
+              <th>Cant. prom. llevada</th>
+              <th>Cant. sugerida</th>
+              <th>Precio prom. histórico</th>
+              <th>Precio máx. histórico</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sugerencias.map(s => `
+            <tr>
+              <td class="font-bold">${s.nombre}</td>
+              <td class="text-muted text-sm">${s.apariciones} evento${s.apariciones > 1 ? 's' : ''}</td>
+              <td><strong style="color:${s.color}">${(s.pctPromedio * 100).toFixed(0)}%</strong></td>
+              <td><span style="color:${s.color};font-size:12px;font-weight:600">${s.nivel}</span></td>
+              <td class="text-muted">${s.cantPromedio}</td>
+              <td><strong style="color:var(--accent3)">${s.cantSugerida}</strong></td>
+              <td class="money text-muted">${fmt(Math.round(s.precioPromedio))}</td>
+              <td class="money" style="color:var(--accent3)">${fmt(s.precioMax)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- HISTORIAL POR EVENTO -->
+    <div class="card mb-16">
+      <div class="card-title mb-16">📋 Historial de Eventos</div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        ${cerrados.map(ev => {
+          const totalVendido = ev.productos.reduce((s, p) => s + ((p.cantidad||0) - (p.volvieron||0)), 0);
+          const totalIngresos = ev.productos.reduce((s, p) => s + ((p.cantidad||0) - (p.volvieron||0)) * (p.precioVenta||0), 0);
+          return `
+          <details style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+            <summary style="padding:16px 20px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:var(--surface2);font-family:'Syne',sans-serif;font-weight:700;font-size:14px;list-style:none">
+              <span>${ev.nombre} ${ev.historico ? '<span style="font-size:10px;background:#e8f4ff;color:#1a5c9a;padding:2px 8px;border-radius:10px;font-family:\'DM Sans\',sans-serif;font-weight:500">histórico</span>' : ''}</span>
+              <span style="display:flex;gap:24px;font-weight:400;font-family:\'DM Sans\',sans-serif;font-size:13px;color:var(--text2)">
+                <span>📅 ${ev.fecha ? formatDate(ev.fecha) : '—'}</span>
+                <span>📦 ${totalVendido} vendidos</span>
+                <span style="color:var(--accent3);font-weight:600">${fmt(totalIngresos)}</span>
+              </span>
+            </summary>
+            <div style="padding:16px 20px">
+              ${ev.observaciones ? `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;font-size:13px;color:#7a4f00"><strong>📝 Observaciones:</strong> ${ev.observaciones}</div>` : ''}
+              <table style="width:100%;border-collapse:collapse;font-size:13px">
+                <thead><tr style="border-bottom:1px solid var(--border)">
+                  <th style="text-align:left;padding:6px 8px;color:var(--text3);font-size:11px;font-weight:600">PRODUCTO</th>
+                  <th style="text-align:right;padding:6px 8px;color:var(--text3);font-size:11px;font-weight:600">LLEVÓ</th>
+                  <th style="text-align:right;padding:6px 8px;color:var(--text3);font-size:11px;font-weight:600">VENDIÓ</th>
+                  <th style="text-align:right;padding:6px 8px;color:var(--text3);font-size:11px;font-weight:600">VOLVIÓ</th>
+                  <th style="text-align:right;padding:6px 8px;color:var(--text3);font-size:11px;font-weight:600">% VENDIDO</th>
+                  <th style="text-align:right;padding:6px 8px;color:var(--text3);font-size:11px;font-weight:600">PRECIO</th>
+                  <th style="text-align:right;padding:6px 8px;color:var(--text3);font-size:11px;font-weight:600">INGRESO</th>
+                </tr></thead>
+                <tbody>
+                  ${ev.productos.filter(p => p.cantidad > 0).map(p => {
+                    const vendido = (p.cantidad||0) - (p.volvieron||0);
+                    const pct = p.cantidad > 0 ? (vendido / p.cantidad * 100).toFixed(0) : 0;
+                    const ingreso = vendido * (p.precioVenta||0);
+                    const color = pct >= 70 ? 'var(--accent3)' : pct >= 40 ? 'var(--warn)' : 'var(--danger)';
+                    return `<tr style="border-bottom:1px solid var(--border)">
+                      <td style="padding:6px 8px;font-weight:500">${p.nombre}</td>
+                      <td style="padding:6px 8px;text-align:right;color:var(--text2)">${p.cantidad}</td>
+                      <td style="padding:6px 8px;text-align:right;font-weight:600">${vendido}</td>
+                      <td style="padding:6px 8px;text-align:right;color:var(--text3)">${p.volvieron||0}</td>
+                      <td style="padding:6px 8px;text-align:right;color:${color};font-weight:600">${pct}%</td>
+                      <td style="padding:6px 8px;text-align:right;color:var(--text2)">${fmt(p.precioVenta||0)}</td>
+                      <td style="padding:6px 8px;text-align:right;color:var(--accent3);font-weight:600">${fmt(ingreso)}</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </details>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
 
 function fmt(n) {
   if (isNaN(n) || n === null) return '$0';
